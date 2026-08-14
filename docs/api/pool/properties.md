@@ -6,7 +6,7 @@ Properties for accessing pool data and metadata.
 
 Gets the number of entries in the pool.
 
-```typescript
+```text
 pool.size: number
 ```
 
@@ -19,27 +19,29 @@ console.log(`Pool has ${pool.size} entries`);
 
 Gets all data objects from the pool (without metadata).
 
-```typescript
+```text
 pool.all: T[]
 ```
 
 **Example:**
 ```typescript
 const allUsers = pool.all;
-allUsers.forEach(user => console.log(user.name));
+for (const user of allUsers) {
+  console.log(user.name);
+}
 ```
 
 ## allEntries
 
 Gets all pool entries (with metadata).
 
-```typescript
+```text
 pool.allEntries: PoolEntry<T>[]
 ```
 
 **Example:**
 ```typescript
-pool.allEntries.forEach(entry => {
+for (const entry of pool.allEntries) {
   console.log(entry.data, entry.meta);
-});
+}
 ```

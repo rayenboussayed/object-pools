@@ -1,6 +1,5 @@
-import { describe, test, expect, beforeEach } from 'bun:test';
-import { Pool } from '../src/Pool';
-import type { PoolEntry } from '../src/types';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { Pool } from '../src/pool';
 
 interface TestData {
 	id: string;
@@ -47,7 +46,7 @@ describe('Pool', () => {
 
 			const removed = pool.remove((data) => data.id === '1');
 
-			expect(removed.length).toBe(1);
+			expect(removed).toHaveLength(1);
 			expect(pool.size).toBe(1);
 			expect(pool.all[0]?.id).toBe('2');
 		});
@@ -59,7 +58,7 @@ describe('Pool', () => {
 
 			const removed = pool.removeBatch([(data) => data.id === '1', (data) => data.id === '2']);
 
-			expect(removed.length).toBe(2);
+			expect(removed).toHaveLength(2);
 			expect(pool.size).toBe(1);
 		});
 	});
@@ -77,7 +76,7 @@ describe('Pool', () => {
 		});
 
 		test('get() by predicate should return matching data', () => {
-			const result = pool.get((e) => e.data.value > 150);
+			const result = pool.get((entry) => entry.data.value > 150);
 
 			expect(result?.id).toBe('2');
 		});
@@ -94,8 +93,8 @@ describe('Pool', () => {
 		});
 
 		test('has() by predicate should return true if exists', () => {
-			expect(pool.has((e) => e.data.value > 150)).toBe(true);
-			expect(pool.has((e) => e.data.value > 300)).toBe(false);
+			expect(pool.has((entry) => entry.data.value > 150)).toBe(true);
+			expect(pool.has((entry) => entry.data.value > 300)).toBe(false);
 		});
 
 		test('set() should update existing entry', () => {
@@ -139,6 +138,7 @@ describe('Pool', () => {
 
 		test('forEach() should iterate over all entries', () => {
 			const ids: string[] = [];
+			// eslint-disable-next-line unicorn/no-for-each -- exercising the forEach API itself
 			pool.forEach((entry) => {
 				ids.push(entry.data.id);
 			});
@@ -155,13 +155,13 @@ describe('Pool', () => {
 		test('filter() should return matching entries', () => {
 			const active = pool.filter((entry) => entry.meta.active === true);
 
-			expect(active.length).toBe(2);
+			expect(active).toHaveLength(2);
 			expect(active[0]?.data.id).toBe('1');
 			expect(active[1]?.data.id).toBe('3');
 		});
 
 		test('reduce() should aggregate values', () => {
-			const sum = pool.reduce((acc, entry) => acc + entry.data.value, 0);
+			const sum = pool.reduce((accumulator, entry) => accumulator + entry.data.value, 0);
 
 			expect(sum).toBe(600);
 		});
@@ -177,19 +177,19 @@ describe('Pool', () => {
 		});
 
 		test('find() should return first matching entry', () => {
-			const entry = pool.find((e) => e.meta.active === true);
+			const entry = pool.find((entry_) => entry_.meta.active === true);
 
 			expect(entry?.data.id).toBe('1');
 		});
 
 		test('findIndex() should return index of first match', () => {
-			const index = pool.findIndex((e) => e.data.value === 200);
+			const index = pool.findIndex((entry) => entry.data.value === 200);
 
 			expect(index).toBe(1);
 		});
 
 		test('findIndex() should return -1 if not found', () => {
-			const index = pool.findIndex((e) => e.data.value === 999);
+			const index = pool.findIndex((entry) => entry.data.value === 999);
 
 			expect(index).toBe(-1);
 		});
@@ -280,16 +280,26 @@ describe('Pool', () => {
 		});
 
 		test('partition() should split pool into two', () => {
-			const [active, inactive] = pool.partition((e) => e.meta.active === true);
+			const [active, inactive] = pool.partition((entry) => entry.meta.active === true);
 
 			expect(active.size).toBe(2);
 			expect(inactive.size).toBe(1);
 		});
 
-		test('sample() should return random subset', () => {
+		test('sample() should return distinct entries in original order', () => {
 			const sample = pool.sample(2);
 
 			expect(sample.size).toBe(2);
+			const ids = sample.all.map((entry) => entry.id);
+			const positions = ids.map((id) => ['1', '2', '3'].indexOf(id));
+			expect(positions).toEqual([...positions].sort((a, b) => a - b));
+		});
+
+		test('sample() with count larger than pool returns all entries in order', () => {
+			const sample = pool.sample(10);
+
+			expect(sample.size).toBe(3);
+			expect(sample.all.map((entry) => entry.id)).toEqual(['1', '2', '3']);
 		});
 
 		test('shuffle() should reorder entries', () => {
@@ -373,38 +383,38 @@ describe('Pool', () => {
 
 	describe('Events', () => {
 		test('on("add") should fire when entry added', () => {
-			let called = false;
+			let isCalled = false;
 			pool.on('add', () => {
-				called = true;
+				isCalled = true;
 			});
 
 			pool.add({ id: '1', name: 'test', value: 100 });
 
-			expect(called).toBe(true);
+			expect(isCalled).toBe(true);
 		});
 
 		test('on("remove") should fire when entry removed', () => {
-			let called = false;
+			let isCalled = false;
 			pool.add({ id: '1', name: 'test', value: 100 });
 			pool.on('remove', () => {
-				called = true;
+				isCalled = true;
 			});
 
 			pool.remove((data) => data.id === '1');
 
-			expect(called).toBe(true);
+			expect(isCalled).toBe(true);
 		});
 
 		test('on("get") should fire when entry retrieved', () => {
-			let called = false;
+			let isCalled = false;
 			pool.add({ id: '1', name: 'test', value: 100 });
 			pool.on('get', () => {
-				called = true;
+				isCalled = true;
 			});
 
 			pool.get('id', '1');
 
-			expect(called).toBe(true);
+			expect(isCalled).toBe(true);
 		});
 
 		test('off() should unregister handler', () => {
@@ -420,6 +430,115 @@ describe('Pool', () => {
 
 			expect(count).toBe(1);
 		});
+
+		test('on("set") should fire when entry is updated', () => {
+			let updatedId: string | undefined;
+			pool.add({ id: '1', name: 'test', value: 100 });
+			pool.on('set', (entry) => {
+				updatedId = entry.data.id;
+			});
+
+			pool.set('id', '1', { id: '1', name: 'updated', value: 200 });
+
+			expect(updatedId).toBe('1');
+		});
+
+		test('on("set") should not fire when entry is created', () => {
+			let isCalled = false;
+			pool.on('set', () => {
+				isCalled = true;
+			});
+
+			pool.set('id', '1', { id: '1', name: 'test', value: 100 });
+
+			expect(isCalled).toBe(false);
+		});
+
+		test('on("batchAdd") should fire with all entries', () => {
+			let received: { data: TestData }[] = [];
+			pool.on('batchAdd', (entries: { data: TestData }[]) => {
+				received = entries;
+			});
+
+			pool.addBatch([
+				{ data: { id: '1', name: 'test1', value: 100 } },
+				{ data: { id: '2', name: 'test2', value: 200 } },
+			]);
+
+			expect(received).toHaveLength(2);
+			expect(received.map((entry) => entry.data.id)).toEqual(['1', '2']);
+		});
+
+		test('on("batchRemove") should fire with removed entries', () => {
+			let received: { data: TestData }[] = [];
+			pool.add({ id: '1', name: 'test1', value: 100 });
+			pool.add({ id: '2', name: 'test2', value: 200 });
+			pool.on('batchRemove', (entries: { data: TestData }[]) => {
+				received = entries;
+			});
+
+			pool.removeBatch([(data) => data.id === '1', (data) => data.id === '2']);
+
+			expect(received).toHaveLength(2);
+			expect(received.map((entry) => entry.data.id)).toEqual(['1', '2']);
+		});
+
+		test('on("batchRemove") should not fire when nothing is removed', () => {
+			let isCalled = false;
+			pool.on('batchRemove', () => {
+				isCalled = true;
+			});
+
+			pool.removeBatch([(data) => data.id === 'missing']);
+
+			expect(isCalled).toBe(false);
+		});
+	});
+
+	describe('Method Wrapping', () => {
+		test('wrap() should intercept calls and preserve original behavior', () => {
+			const calls: string[] = [];
+			pool.wrap('add', (original, data, meta) => {
+				calls.push(`before: ${data.id}`);
+				const result = original(data, meta);
+				calls.push('after');
+				return result;
+			});
+
+			pool.add({ id: '1', name: 'test', value: 100 });
+
+			expect(calls).toEqual(['before: 1', 'after']);
+			expect(pool.size).toBe(1);
+			expect(pool.all[0]?.id).toBe('1');
+		});
+
+		test('wrap() should preserve event emission', () => {
+			let isEventFired = false;
+			pool.on('add', () => {
+				isEventFired = true;
+			});
+			pool.wrap('add', (original, data, meta) => original(data, meta));
+
+			pool.add({ id: '1', name: 'test', value: 100 });
+
+			expect(isEventFired).toBe(true);
+		});
+
+		test('wrap() should allow transforming the result', () => {
+			let lastRemoved: string | undefined;
+			pool.wrap('remove', (original, predicate) => {
+				const result = original(predicate);
+				lastRemoved = result.map((entry) => entry.data.id).join(',');
+				return result;
+			});
+			pool.add({ id: '1', name: 'test1', value: 100 });
+			pool.add({ id: '2', name: 'test2', value: 200 });
+
+			pool.remove((data) => data.id === '1');
+
+			expect(lastRemoved).toBe('1');
+			expect(pool.size).toBe(1);
+		});
 	});
 
 	describe('Properties', () => {
@@ -433,12 +552,12 @@ describe('Pool', () => {
 		});
 
 		test('all should return array of data', () => {
-			expect(pool.all.length).toBe(2);
+			expect(pool.all).toHaveLength(2);
 			expect(pool.all[0]?.id).toBe('1');
 		});
 
 		test('allEntries should return array of entries', () => {
-			expect(pool.allEntries.length).toBe(2);
+			expect(pool.allEntries).toHaveLength(2);
 			expect(pool.allEntries[0]?.data.id).toBe('1');
 		});
 	});

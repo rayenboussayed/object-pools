@@ -1,13 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun run:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(bun tsc:*)",
-      "Bash(bun test --help:*)",
-      "Bash(bun test:*)",
-      "Bash(bun add:*)",
-      "Bash(bun install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsx:*)",
       "Bash(find:*)"
     ],
     "deny": [],

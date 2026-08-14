@@ -1,7 +1,7 @@
 import { Pool, Selectors, Binder } from '../src';
 import type { PoolEntry } from '../src/types';
 
-// ========== ОПРЕДЕЛЕНИЕ ТИПОВ ==========
+// ========== DEFINING TYPES ==========
 
 interface Proxy {
 	ip: string;
@@ -23,18 +23,18 @@ interface Service {
 
 console.log('=== Proxy Pool Advanced Example ===\n');
 
-// ========== СОЗДАНИЕ ПУЛОВ ==========
+// ========== CREATING POOLS ==========
 
 const proxies = new Pool<Proxy>();
 const accounts = new Pool<Account>();
 const services = new Pool<Service>();
 
-// ========== ДОБАВЛЕНИЕ ДАННЫХ ==========
+// ========== ADDING DATA ==========
 
-// Одиночное добавление
+// Single add
 proxies.add({ ip: '1.1.1.1', country: 'US', speed: 100, provider: 'ProviderA' }, { usedCount: 0, lastUsed: null, active: true });
 
-// Batch добавление
+// Batch add
 proxies.addBatch([
 	{
 		data: { ip: '2.2.2.2', country: 'UK', speed: 200, provider: 'ProviderB' },
@@ -62,16 +62,16 @@ console.log(`Total proxies: ${proxies.size}`);
 console.log(`Total accounts: ${accounts.size}`);
 console.log(`Total services: ${services.size}\n`);
 
-// ========== СОБЫТИЯ ==========
+// ========== EVENTS ==========
 
-// Автоматическое обновление статистики при использовании
+// Auto-update usage statistics on use
 proxies.on('get', (entry: PoolEntry<Proxy>) => {
 	entry.meta.usedCount = (entry.meta.usedCount || 0) + 1;
 	entry.meta.lastUsed = new Date();
 	console.log(`[Event] Proxy ${entry.data.ip} used, total: ${entry.meta.usedCount}`);
 });
 
-// Логирование
+// Logging
 proxies.on('add', (entry: PoolEntry<Proxy>) => {
 	console.log(`[Event] Added proxy: ${entry.data.ip}`);
 });
@@ -82,32 +82,32 @@ console.log('=== Simple Query ===\n');
 
 const proxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.select(Selectors.random);
 
 console.log('Random US proxy:', proxy);
 
 console.log('\n=== Complex Query ===\n');
 
-// Сложный запрос с композицией фильтров и сортировок
+// Complex query composing filters and sort orders
 const bestProxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
-	.where((e) => e.meta.active === true)
-	.whereOr([(e) => e.data.provider === 'ProviderA', (e) => e.data.provider === 'ProviderB'])
-	.where((e) => e.meta.usedCount < 10)
-	.orderBy('speed', 'desc') // первая сортировка по скорости
-	.orderByMeta('usedCount', 'asc') // вторая сортировка по использованию
+	.where((entry) => entry.data.country === 'US')
+	.where((entry) => entry.meta.active === true)
+	.whereOr([(entry) => entry.data.provider === 'ProviderA', (entry) => entry.data.provider === 'ProviderB'])
+	.where((entry) => entry.meta.usedCount < 10)
+	.orderBy('speed', 'desc') // first sort: by speed
+	.orderByMeta('usedCount', 'asc') // second sort: by usage
 	.select(Selectors.first);
 
 console.log('Best proxy (US, active, Provider A or B, low usage, high speed):', bestProxy);
 
 console.log('\n=== Pagination ===\n');
 
-// Пагинация
+// Pagination
 const page1Proxies = proxies
 	.query()
-	.where((e) => e.meta.active)
+	.where((entry) => entry.meta.active)
 	.orderBy('speed', 'desc')
 	.limit(2)
 	.toArray();
@@ -116,7 +116,7 @@ console.log('Top 2 active proxies by speed:', page1Proxies);
 
 const page2Proxies = proxies
 	.query()
-	.where((e) => e.meta.active)
+	.where((entry) => entry.meta.active)
 	.orderBy('speed', 'desc')
 	.offset(2)
 	.limit(2)
@@ -124,7 +124,7 @@ const page2Proxies = proxies
 
 console.log('Next 2 active proxies:', page2Proxies);
 
-// ========== КОМБИНИРОВАНИЕ ПУЛОВ ==========
+// ========== POOL COMBINATION ==========
 
 console.log('\n=== Pool Combination ===\n');
 
@@ -140,7 +140,7 @@ ukProxies.add({ ip: '20.0.0.1', country: 'UK', speed: 200, provider: 'P2' });
 
 euProxies.add({ ip: '30.0.0.1', country: 'DE', speed: 300, provider: 'P3' });
 
-// Merge уникальных по IP
+// Merge unique by IP
 const allProxies = Pool.mergeUnique([usProxies, ukProxies, euProxies], 'ip');
 console.log(`Total unique proxies by IP: ${allProxies.size}`);
 console.log(
@@ -148,7 +148,7 @@ console.log(
 	allProxies.all.map((p) => p.ip)
 );
 
-// Merge с приоритетом по скорости (оставляем самый быстрый)
+// Merge with speed priority (keep the fastest)
 const pool1 = new Pool<Proxy>();
 const pool2 = new Pool<Proxy>();
 
@@ -161,43 +161,43 @@ console.log('\nMerged with speed priority (keeping fastest):');
 const result = bestProxies.query().select(Selectors.first);
 console.log(`IP: ${result!.ip}, Speed: ${result!.speed}, Provider: ${result!.provider}`);
 
-// ========== ТРАНСФОРМАЦИИ ==========
+// ========== TRANSFORMATIONS ==========
 
 console.log('\n=== Transformations ===\n');
 
-// Partition - разделение на два пула
-const [active, inactive] = proxies.partition((e) => e.meta.active === true);
+// Partition - split into two pools
+const [active, inactive] = proxies.partition((entry) => entry.meta.active === true);
 console.log(`Active proxies: ${active.size}, Inactive: ${inactive.size}`);
 
 // GroupBy
 const byCountry = proxies.groupBy('country');
 console.log('\nProxies by country:');
-byCountry.forEach((pool, country) => {
+for (const [country, pool] of byCountry) {
 	console.log(`  ${country}: ${pool.size} proxies`);
-});
+}
 
 const byProvider = proxies.groupBy('provider');
 console.log('\nProxies by provider:');
-byProvider.forEach((pool, provider) => {
+for (const [provider, pool] of byProvider) {
 	console.log(`  ${provider}: ${pool.size} proxies`);
-});
+}
 
-// Sample - взять N случайных
+// Sample - take N random entries
 const randomSample = proxies.sample(3);
 console.log(`\nRandom sample of 3 proxies: ${randomSample.all.map((p) => p.ip).join(', ')}`);
 
-// ========== СВЯЗЫВАНИЕ ПУЛОВ ==========
+// ========== POOL BINDING ==========
 
 console.log('\n=== Pool Binding ===\n');
 
-const binder = new Binder()
+const binder = new Binder<{ proxy: Proxy; account: Account; service: Service }>()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
 	.bind('service', services)
-	.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-	.where('proxy', (e: PoolEntry<Proxy>) => e.meta.active === true)
-	.where('account', (e: PoolEntry<Account>) => e.data.service === 'twitter')
-	.where('service', (e: PoolEntry<Service>) => e.data.name === 'API')
+	.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+	.where('proxy', (entry: PoolEntry<Proxy>) => entry.meta.active === true)
+	.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'twitter')
+	.where('service', (entry: PoolEntry<Service>) => entry.data.name === 'API')
 	.selectWith('proxy', Selectors.minBy('usedCount'))
 	.selectWith('account', Selectors.random)
 	.selectWith('service', Selectors.first);
@@ -206,55 +206,55 @@ const combo = binder.execute();
 
 if (combo) {
 	console.log('Successfully bound resources:');
-	console.log(`  Proxy: ${combo.proxy.ip} (${combo.proxy.country}, used ${combo.proxy.meta?.usedCount || 0} times)`);
+	console.log(`  Proxy: ${combo.proxy.ip} (${combo.proxy.country})`);
 	console.log(`  Account: ${combo.account.username} (${combo.account.service})`);
 	console.log(`  Service: ${combo.service.name} - ${combo.service.url}`);
 } else {
 	console.log('Failed to bind resources - no matching combination found');
 }
 
-// ========== СЛОЖНЫЙ WORKFLOW ==========
+// ========== COMPLEX WORKFLOW ==========
 
 console.log('\n=== Complex Workflow ===\n');
 
-// 1. Группируем по странам
+// 1. Group by country
 const poolsByCountry = proxies.groupBy('country');
 
-// 2. Для каждой страны берём топ-2 по скорости
+// 2. For each country, take top-2 by speed
 const topPools = new Map<string, Pool<Proxy>>();
 
-poolsByCountry.forEach((pool, country) => {
+for (const [country, pool] of poolsByCountry) {
 	const top2 = pool
 		.query()
-		.where((e) => e.meta.active)
+		.where((entry) => entry.meta.active)
 		.orderBy('speed', 'desc')
 		.limit(2)
 		.toPool();
 
 	topPools.set(country, top2);
 	console.log(`${country}: Top ${top2.size} proxies by speed`);
-});
+}
 
-// 3. Получить топ пул для US
+// 3. Get the top pool for US
 const usTop = topPools.get('US');
 if (usTop) {
 	console.log('\nUS top proxies:');
-	usTop.all.forEach((p) => {
+	for (const p of usTop.all) {
 		console.log(`  ${p.ip} - ${p.speed}ms`);
-	});
+	}
 }
 
 // ========== WEIGHTED SELECTOR ===
 
 console.log('\n=== Weighted Selector ===\n');
 
-// Селектор с весами - чем меньше использовался прокси, тем выше вес
+// Weighted selector - the less a proxy is used, the higher its weight
 const weightedProxy = proxies
 	.query()
-	.where((e) => e.meta.active === true)
+	.where((entry) => entry.meta.active === true)
 	.select(
 		Selectors.weighted((entry) => {
-			// Вес обратно пропорционален использованию
+			// Weight is inversely proportional to usage
 			return 1 / (entry.meta.usedCount + 1);
 		})
 	);

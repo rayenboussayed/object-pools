@@ -6,7 +6,7 @@ Methods for transforming, grouping, and organizing pool data.
 
 Removes duplicate entries based on uniqueBy.
 
-```typescript
+```text
 pool.deduplicate(uniqueBy: keyof T | ((item: T) => any)): this
 ```
 
@@ -28,7 +28,7 @@ pool.deduplicate(user => user.email);
 
 Partitions the pool into two pools based on predicate.
 
-```typescript
+```text
 pool.partition(predicate: (entry: PoolEntry<T>) => boolean): [Pool<T>, Pool<T>]
 ```
 
@@ -48,7 +48,7 @@ console.log(`Premium: ${premium.size}, Free: ${free.size}`);
 
 Groups entries by a field or function.
 
-```typescript
+```text
 pool.groupBy(groupBy: keyof T | ((item: T) => any)): Map<any, Pool<T>>
 ```
 
@@ -60,13 +60,13 @@ pool.groupBy(groupBy: keyof T | ((item: T) => any)): Map<any, Pool<T>>
 **Example:**
 ```typescript
 const byCountry = users.groupBy('country');
-byCountry.forEach((pool, country) => {
+for (const [country, pool] of byCountry) {
   console.log(`${country}: ${pool.size} users`);
-});
+}
 
 // By function
 const byAgeGroup = users.groupBy(user =>
-  user.age < 18 ? 'minor' : user.age < 65 ? 'adult' : 'senior'
+  user.age < 18 ? 'minor' : (user.age < 65 ? 'adult' : 'senior')
 );
 ```
 
@@ -74,7 +74,7 @@ const byAgeGroup = users.groupBy(user =>
 
 Clones the pool (deep copy of entries).
 
-```typescript
+```text
 pool.clone(): Pool<T>
 ```
 
@@ -89,7 +89,7 @@ const backup = pool.clone();
 
 Returns a random sample of entries.
 
-```typescript
+```text
 pool.sample(count: number): Pool<T>
 ```
 
@@ -107,7 +107,7 @@ const randomThree = pool.sample(3);
 
 Shuffles the pool in place.
 
-```typescript
+```text
 pool.shuffle(): this
 ```
 

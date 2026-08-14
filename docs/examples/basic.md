@@ -4,12 +4,12 @@ Simple examples of using the Pools library.
 
 ## Source Code
 
-[View on GitHub](https://github.com/phederal/pools/blob/main/examples/basic.ts)
+[View on GitHub](https://github.com/rayenboussayed/object-pools/blob/main/examples/basic.ts)
 
 ## Running
 
 ```bash
-bun run examples/basic.ts
+npm run example:basic
 ```
 
 ## Code
@@ -36,7 +36,7 @@ console.log(`Total proxies: ${proxies.size}`);
 // Query with filter
 const usProxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.select(Selectors.first);
 
 console.log('First US proxy:', usProxy);
@@ -70,7 +70,7 @@ Add data with optional metadata.
 ```typescript
 const proxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.select(Selectors.first);
 ```
 
@@ -98,10 +98,10 @@ Listen to pool operations.
 ### Pool Binding
 
 ```typescript
-const combo = new Binder()
+const combo = new Binder<{ proxy: Proxy; account: Account }>()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
-	.where('proxy', (e) => e.data.country === 'US')
+	.where('proxy', (entry) => entry.data.country === 'US')
 	.selectWith('proxy', Selectors.minBy('usedCount'))
 	.execute();
 ```

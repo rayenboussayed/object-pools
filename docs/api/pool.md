@@ -5,7 +5,7 @@ Main class for managing collections of data with metadata.
 ## Constructor
 
 ```typescript
-const pool = new Pool<T>();
+const pool = new Pool<T, M>(); // M defaults to PoolMeta
 ```
 
 ## CRUD Operations
@@ -14,8 +14,8 @@ const pool = new Pool<T>();
 
 Adds an entry to the pool.
 
-```typescript
-pool.add(data: T, meta?: Record<string, any>): PoolEntry<T>
+```text
+pool.add(data: T, meta?: M): PoolEntry<T, M>
 ```
 
 **Example:**
@@ -27,8 +27,8 @@ pool.add({ id: '1', name: 'test' }, { active: true });
 
 Adds multiple entries at once.
 
-```typescript
-pool.addBatch(entries: Array<{ data: T; meta?: Record<string, any> }>): void
+```text
+pool.addBatch(items: Array<{ data: T; meta?: M }>): PoolEntry<T, M>[]
 ```
 
 **Example:**
@@ -43,7 +43,7 @@ pool.addBatch([
 
 Removes entries matching a predicate.
 
-```typescript
+```text
 pool.remove(predicate: (data: T) => boolean): T[]
 ```
 
@@ -56,7 +56,7 @@ const removed = pool.remove(data => data.id === '1');
 
 Removes multiple entries using multiple predicates.
 
-```typescript
+```text
 pool.removeBatch(predicates: Array<(data: T) => boolean>): T[]
 ```
 
@@ -66,7 +66,7 @@ pool.removeBatch(predicates: Array<(data: T) => boolean>): T[]
 
 Gets an entry by field value or predicate.
 
-```typescript
+```text
 pool.get(key: keyof T, value: any): T | null
 pool.get(predicate: (entry: PoolEntry<T>) => boolean): T | null
 ```
@@ -84,7 +84,7 @@ const admin = pool.get(({ data }) => data.role === 'admin');
 
 Checks if an entry exists.
 
-```typescript
+```text
 pool.has(key: keyof T, value: any): boolean
 pool.has(predicate: (entry: PoolEntry<T>) => boolean): boolean
 ```
@@ -100,8 +100,8 @@ if (pool.has('id', 'user123')) {
 
 Updates an existing entry or adds a new one.
 
-```typescript
-pool.set(key: keyof T, value: any, data: T, meta?: Record<string, any>): PoolEntry<T>
+```text
+pool.set(key: keyof T, value: any, data: T, meta?: M): PoolEntry<T, M>
 ```
 
 **Example:**
@@ -113,7 +113,7 @@ pool.set('id', 'user123', { id: 'user123', name: 'Updated' });
 
 Removes an entry and returns true if found.
 
-```typescript
+```text
 pool.delete(key: keyof T, value: any): boolean
 ```
 
@@ -128,7 +128,7 @@ const deleted = pool.delete('id', 'user123');
 
 Iterates over all entries.
 
-```typescript
+```text
 pool.forEach(fn: (entry: PoolEntry<T>, index: number) => void): void
 ```
 
@@ -136,7 +136,7 @@ pool.forEach(fn: (entry: PoolEntry<T>, index: number) => void): void
 
 Maps entries to a new array.
 
-```typescript
+```text
 pool.map<U>(fn: (entry: PoolEntry<T>, index: number) => U): U[]
 ```
 
@@ -144,7 +144,7 @@ pool.map<U>(fn: (entry: PoolEntry<T>, index: number) => U): U[]
 
 Filters entries.
 
-```typescript
+```text
 pool.filter(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T>[]
 ```
 
@@ -152,7 +152,7 @@ pool.filter(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T>[]
 
 Reduces entries to a single value.
 
-```typescript
+```text
 pool.reduce<U>(fn: (accumulator: U, entry: PoolEntry<T>, index: number) => U, initialValue: U): U
 ```
 
@@ -160,7 +160,7 @@ pool.reduce<U>(fn: (accumulator: U, entry: PoolEntry<T>, index: number) => U, in
 
 Tests if any entry matches.
 
-```typescript
+```text
 pool.some(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 ```
 
@@ -168,7 +168,7 @@ pool.some(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 
 Tests if all entries match.
 
-```typescript
+```text
 pool.every(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 ```
 
@@ -176,7 +176,7 @@ pool.every(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 
 Finds the first matching entry.
 
-```typescript
+```text
 pool.find(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T> | undefined
 ```
 
@@ -184,7 +184,7 @@ pool.find(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T> | u
 
 Finds the index of the first matching entry.
 
-```typescript
+```text
 pool.findIndex(fn: (entry: PoolEntry<T>, index: number) => boolean): number
 ```
 
@@ -194,11 +194,11 @@ pool.findIndex(fn: (entry: PoolEntry<T>, index: number) => boolean): number
 
 Creates a query builder.
 
-```typescript
-pool.query(): PoolQuery<T>
+```text
+pool.query(): Query<T>
 ```
 
-See [PoolQuery](/api/query) for details.
+See [Query](/api/query) for details.
 
 ## Combining Pools
 
@@ -206,7 +206,7 @@ See [PoolQuery](/api/query) for details.
 
 Merges another pool into this one.
 
-```typescript
+```text
 pool.merge(other: Pool<T>): void
 ```
 
@@ -214,7 +214,7 @@ pool.merge(other: Pool<T>): void
 
 Merges with deduplication.
 
-```typescript
+```text
 pool.mergeUnique(other: Pool<T>, key: keyof T | ((data: T) => any)): void
 ```
 
@@ -222,7 +222,7 @@ pool.mergeUnique(other: Pool<T>, key: keyof T | ((data: T) => any)): void
 
 Combines pools without duplicates.
 
-```typescript
+```text
 pool.union(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 ```
 
@@ -230,7 +230,7 @@ pool.union(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 
 Keeps only common elements.
 
-```typescript
+```text
 pool.intersect(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 ```
 
@@ -238,7 +238,7 @@ pool.intersect(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 
 Removes common elements.
 
-```typescript
+```text
 pool.difference(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 ```
 
@@ -246,7 +246,7 @@ pool.difference(other: Pool<T>, compareFn: (a: T, b: T) => boolean): void
 
 Removes duplicates.
 
-```typescript
+```text
 pool.deduplicate(key: keyof T | ((data: T) => any)): void
 ```
 
@@ -256,7 +256,7 @@ pool.deduplicate(key: keyof T | ((data: T) => any)): void
 
 Creates a copy of the pool.
 
-```typescript
+```text
 pool.clone(): Pool<T>
 ```
 
@@ -264,7 +264,7 @@ pool.clone(): Pool<T>
 
 Splits pool into two based on predicate.
 
-```typescript
+```text
 pool.partition(predicate: (entry: PoolEntry<T>) => boolean): [Pool<T>, Pool<T>]
 ```
 
@@ -272,7 +272,7 @@ pool.partition(predicate: (entry: PoolEntry<T>) => boolean): [Pool<T>, Pool<T>]
 
 Returns random sample of entries.
 
-```typescript
+```text
 pool.sample(count: number): Pool<T>
 ```
 
@@ -280,7 +280,7 @@ pool.sample(count: number): Pool<T>
 
 Shuffles entries in place.
 
-```typescript
+```text
 pool.shuffle(): void
 ```
 
@@ -288,7 +288,7 @@ pool.shuffle(): void
 
 Groups entries by field or function.
 
-```typescript
+```text
 pool.groupBy(key: keyof T | ((data: T) => any)): Map<any, Pool<T>>
 ```
 
@@ -298,7 +298,7 @@ pool.groupBy(key: keyof T | ((data: T) => any)): Map<any, Pool<T>>
 
 Merges multiple pools.
 
-```typescript
+```text
 Pool.merge<T>(...pools: Pool<T>[]): Pool<T>
 ```
 
@@ -306,7 +306,7 @@ Pool.merge<T>(...pools: Pool<T>[]): Pool<T>
 
 Merges with deduplication.
 
-```typescript
+```text
 Pool.mergeUnique<T>(pools: Pool<T>[], key: keyof T | ((data: T) => any)): Pool<T>
 ```
 
@@ -314,7 +314,7 @@ Pool.mergeUnique<T>(pools: Pool<T>[], key: keyof T | ((data: T) => any)): Pool<T
 
 Merges with custom conflict resolution.
 
-```typescript
+```text
 Pool.mergeUniqueWith<T>(
   pools: Pool<T>[],
   key: keyof T | ((data: T) => any),
@@ -326,7 +326,7 @@ Pool.mergeUniqueWith<T>(
 
 Finds common elements between two pools.
 
-```typescript
+```text
 Pool.intersect<T>(pool1: Pool<T>, pool2: Pool<T>, compareFn: (a: T, b: T) => boolean): Pool<T>
 ```
 
@@ -336,7 +336,7 @@ Pool.intersect<T>(pool1: Pool<T>, pool2: Pool<T>, compareFn: (a: T, b: T) => boo
 
 Registers an event handler.
 
-```typescript
+```text
 pool.on(event: string, handler: Function): void
 ```
 
@@ -362,7 +362,7 @@ pool.on('get', (entry) => {
 
 Unregisters an event handler.
 
-```typescript
+```text
 pool.off(event: string, handler: Function): void
 ```
 
@@ -372,7 +372,7 @@ pool.off(event: string, handler: Function): void
 
 Number of entries in the pool.
 
-```typescript
+```text
 pool.size: number
 ```
 
@@ -380,7 +380,7 @@ pool.size: number
 
 Array of all data objects.
 
-```typescript
+```text
 pool.all: T[]
 ```
 
@@ -388,8 +388,8 @@ pool.all: T[]
 
 Array of all pool entries.
 
-```typescript
-pool.allEntries: PoolEntry<T>[]
+```text
+pool.allEntries: PoolEntry<T, M>[]
 ```
 
 ## Method Wrapping
@@ -398,7 +398,7 @@ pool.allEntries: PoolEntry<T>[]
 
 Wraps a method with custom behavior.
 
-```typescript
+```text
 pool.wrap<K extends keyof Pool<T>>(
   method: K,
   wrapper: (original: Function, ...args: any[]) => any

@@ -1,70 +1,70 @@
-# Резюме проекта: Pools
+# Project Summary: Pools
 
-## Суть проекта
+## Project Essence
 
-**Pools** - это легковесная TypeScript библиотека для удобной работы с коллекциями данных. Это **замена массивов, объектов и Map** с встроенными фильтрами, сортировкой, мета-данными и комбинированием пулов.
+**Pools** is a lightweight TypeScript library for conveniently working with data collections. It is a **replacement for arrays, objects, and Maps** with built-in filters, sorting, metadata, and pool combination.
 
-**Не является:**
+**It is not:**
 
--   ORM или заменой БД
--   Решением для миллионов записей
--   Enterprise-фреймворком
+-   An ORM or database replacement
+-   A solution for millions of records
+-   An enterprise framework
 
-**Является:**
+**It is:**
 
--   Утилитой для ежедневной работы с коллекциями
--   Абстракцией над массивами с удобным API
--   Инструментом для быстрого создания пулов любых сущностей
+-   A utility for daily work with collections
+-   An abstraction over arrays with a convenient API
+-   A tool for quickly creating pools of any entities
 
 ---
 
-## Какие задачи решает
+## What Problems It Solves
 
-### Проблема (без библиотеки):
+### The Problem (without the library):
 
 ```typescript
-// Работа с прокси
+// Working with proxies
 const proxies = [
 	{ ip: '1.1.1.1', country: 'US' },
 	{ ip: '2.2.2.2', country: 'UK' },
 ];
 
-// Фильтрация руками
+// Manual filtering
 const usProxies = proxies.filter((p) => p.country === 'US');
 
-// Сортировка руками
+// Manual sorting
 usProxies.sort((a, b) => a.usedCount - b.usedCount);
 
-// Взять случайный
+// Pick a random one
 const proxy = usProxies[Math.floor(Math.random() * usProxies.length)];
 
-// Отметить использование - руками везде
+// Track usage - manually everywhere
 proxy.usedCount++;
 proxy.lastUsed = new Date();
 
-// Связывание с аккаунтами - вручную
+// Binding with accounts - manually
 const account = accounts.find((a) => a.status === 'active');
 if (!proxy || !account) return null;
 
-// Комбинирование из разных источников - сложно
+// Combining from different sources - painful
 const allProxies = [...usProxies, ...ukProxies, ...euProxies];
 const unique = Array.from(new Map(allProxies.map((p) => [p.ip, p])).values());
 ```
 
-### Решение (с библиотекой):
+### The Solution (with the library):
 
 ```typescript
-// Создание пула за секунды
+// Create a pool in seconds
 const proxies = new Pool<Proxy>();
 proxies.add({ ip: '1.1.1.1', country: 'US' }, { usedCount: 0 });
 
-// Автоматическое обновление мета-данных
+// Automatic metadata updates
 proxies.on('get', (entry) => {
 	entry.meta.usedCount++;
 	entry.meta.lastUsed = new Date();
 });
 
-// Chainable фильтры и сортировка
+// Chainable filters and sorting
 const proxy = proxies
 	.query()
 	.where((e) => e.data.country === 'US')
@@ -72,7 +72,7 @@ const proxy = proxies
 	.sortByMeta('usedCount', 'asc')
 	.select(Selectors.random);
 
-// Связывание пулов типобезопасно
+// Type-safe pool binding
 const combo = new PoolBinder()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
@@ -81,20 +81,20 @@ const combo = new PoolBinder()
 	.execute();
 // { proxy: {...}, account: {...} }
 
-// Комбинирование пулов одной строкой
+// Combine pools in one line
 const allProxies = Pool.mergeUnique([usProxies, ukProxies, euProxies], 'ip');
 ```
 
 ---
 
-## Итоговый план архитектуры
+## Final Architecture Plan
 
-### Основные типы:
+### Core Types:
 
 ```typescript
 type PoolEntry<T> = {
-	data: T; // пользовательские данные
-	meta: Record<string, any>; // служебные мета-данные
+	data: T; // user data
+	meta: Record<string, any>; // service metadata
 };
 
 type Filter<T> = (entry: PoolEntry<T>) => boolean;
@@ -103,9 +103,9 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 
 ---
 
-### Класс Pool<T>
+### The Pool<T> Class
 
-**CRUD операции:**
+**CRUD operations:**
 
 -   `add(data: T, meta?: Record<string, any>): PoolEntry<T>`
 -   `addBatch(items: { data: T, meta?: Record<string, any> }[]): PoolEntry<T>[]`
@@ -116,7 +116,7 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 
 -   `query(): PoolQuery<T>`
 
-**Комбинирование пулов:**
+**Pool combination:**
 
 -   `merge(source: Pool<T> | PoolQuery<T>): this`
 -   `mergeUnique(source: Pool<T> | PoolQuery<T>, uniqueBy: keyof T | ((item: T) => any)): this`
@@ -125,7 +125,7 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 -   `difference(other: Pool<T>, compareFn?: (a: T, b: T) => boolean): this`
 -   `deduplicate(uniqueBy: keyof T | ((item: T) => any)): this`
 
-**Трансформация:**
+**Transformation:**
 
 -   `clone(): Pool<T>`
 -   `partition(predicate: (entry: PoolEntry<T>) => boolean): [Pool<T>, Pool<T>]`
@@ -133,7 +133,7 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 -   `shuffle(): this`
 -   `groupBy(groupBy: keyof T | ((item: T) => any)): Map<any, Pool<T>>`
 
-**Статические методы:**
+**Static methods:**
 
 -   `static merge<T>(...pools: Pool<T>[]): Pool<T>`
 -   `static mergeUnique<T>(sources: (Pool<T> | PoolQuery<T>)[], uniqueBy: keyof T | ((item: T) => any)): Pool<T>`
@@ -141,13 +141,13 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 -   `static intersect<T>(pool1: Pool<T>, pool2: Pool<T>, compareFn?: (a: T, b: T) => boolean): Pool<T>`
 -   `static groupBy<T>(sources: (Pool<T> | PoolQuery<T>)[], groupBy: keyof T | ((item: T) => any)): Map<any, Pool<T>>`
 
-**События:**
+**Events:**
 
 -   `on(event: string, handler: Function): void`
 -   `off(event: string, handler: Function): void`
 -   `emit(event: string, ...args: any[]): void` (internal)
 
-**События которые генерируются:**
+**Events that are emitted:**
 
 -   `'add'` - `(entry: PoolEntry<T>) => void`
 -   `'remove'` - `(entry: PoolEntry<T>) => void`
@@ -158,11 +158,11 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 -   `'beforeSelect'` - `(entries: PoolEntry<T>[]) => void`
 -   `'afterSelect'` - `(entry: PoolEntry<T> | null) => void`
 
-**Расширение:**
+**Extension:**
 
 -   `wrap<K extends keyof this>(method: K, wrapper: (original: Function, ...args: any[]) => any): void`
 
-**Утилиты:**
+**Utilities:**
 
 -   `get size(): number`
 -   `get all(): T[]`
@@ -170,38 +170,38 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 
 ---
 
-### Класс PoolQuery<T>
+### The PoolQuery<T> Class
 
-**Фильтрация:**
+**Filtering:**
 
 -   `where(filter: Filter<T>): this`
 -   `whereOr(filters: Filter<T>[]): this`
 
-**Сортировка (chainable):**
+**Sorting (chainable):**
 
 -   `sortBy(fn: (a: PoolEntry<T>, b: PoolEntry<T>) => number): this`
 -   `sortBy(field: keyof T, order?: 'asc' | 'desc'): this`
 -   `sortByMeta(field: string, order?: 'asc' | 'desc'): this`
 
-**Пагинация:**
+**Pagination:**
 
 -   `offset(count: number): this`
 -   `take(count: number): this`
 
-**Материализация:**
+**Materialization:**
 
 -   `select(selector: Selector<T>): T | null`
 -   `toArray(): T[]`
 -   `toPool(): Pool<T>`
 -   `get count(): number`
 
-**Расширение:**
+**Extension:**
 
 -   `wrap<K extends keyof this>(method: K, wrapper: (original: Function, ...args: any[]) => any): void`
 
 ---
 
-### Встроенные Selectors
+### Built-in Selectors
 
 ```typescript
 export const Selectors = {
@@ -215,9 +215,9 @@ export const Selectors = {
 
 ---
 
-### Класс PoolBinder
+### The PoolBinder Class
 
-**Связывание пулов:**
+**Binding pools:**
 
 -   `bind<T>(name: string, pool: Pool<T>): this`
 -   `where<T>(poolName: string, filter: Filter<T>): this`
@@ -226,10 +226,10 @@ export const Selectors = {
 
 ---
 
-## Пример использования всего вместе
+## Putting It All Together
 
 ```typescript
-// ========== ОПРЕДЕЛЕНИЕ ТИПОВ ==========
+// ========== DEFINING TYPES ==========
 
 interface Proxy {
 	ip: string;
@@ -249,18 +249,18 @@ interface Service {
 	url: string;
 }
 
-// ========== СОЗДАНИЕ ПУЛОВ ==========
+// ========== CREATING POOLS ==========
 
 const proxies = new Pool<Proxy>();
 const accounts = new Pool<Account>();
 const services = new Pool<Service>();
 
-// ========== ДОБАВЛЕНИЕ ДАННЫХ ==========
+// ========== ADDING DATA ==========
 
-// Одиночное добавление
+// Single add
 proxies.add({ ip: '1.1.1.1', country: 'US', speed: 100, provider: 'ProviderA' }, { usedCount: 0, lastUsed: null, active: true });
 
-// Batch добавление
+// Batch add
 proxies.addBatch([
 	{
 		data: { ip: '2.2.2.2', country: 'UK', speed: 200, provider: 'ProviderB' },
@@ -272,26 +272,26 @@ proxies.addBatch([
 	},
 ]);
 
-// ========== СОБЫТИЯ ==========
+// ========== EVENTS ==========
 
-// Автоматическое обновление статистики при использовании
+// Auto-update usage statistics on use
 proxies.on('get', (entry) => {
 	entry.meta.usedCount = (entry.meta.usedCount || 0) + 1;
 	entry.meta.lastUsed = new Date();
 });
 
-// Логирование
+// Logging
 proxies.on('add', (entry) => {
 	console.log(`[Pool] Added proxy: ${entry.data.ip}`);
 });
 
-// ========== WRAP ДЛЯ БД ==========
+// ========== WRAP FOR DATABASE ==========
 
-// Синхронизация с базой данных
+// Sync with the database
 proxies.wrap('add', async (original, data, meta) => {
 	const entry = original(data, meta);
 
-	// Сохраняем в БД
+	// Save to the database
 	await db.insert('proxies', {
 		data: JSON.stringify(data),
 		meta: JSON.stringify(meta),
@@ -300,10 +300,10 @@ proxies.wrap('add', async (original, data, meta) => {
 	return entry;
 });
 
-// Ленивая загрузка из БД
+// Lazy loading from the database
 proxies.wrap('query', (original) => {
 	return () => {
-		// Загружаем из БД при первом query, если пул пустой
+		// Load from the database on first query if the pool is empty
 		if (proxies.size === 0) {
 			const rows = db.querySync('SELECT * FROM proxies');
 			rows.forEach((row) => {
@@ -317,120 +317,120 @@ proxies.wrap('query', (original) => {
 
 // ========== QUERY API ==========
 
-// Простой запрос
+// Simple query
 const proxy = proxies
 	.query()
 	.where((e) => e.data.country === 'US')
 	.select(Selectors.random);
 
-// Сложный запрос с композицией фильтров и сортировок
+// Complex query composing filters and sort orders
 const bestProxy = proxies
 	.query()
 	.where((e) => e.data.country === 'US')
 	.where((e) => e.meta.active === true)
 	.whereOr([(e) => e.data.provider === 'ProviderA', (e) => e.data.provider === 'ProviderB'])
 	.where((e) => e.meta.usedCount < 10)
-	.sortBy('speed', 'desc') // первая сортировка по скорости
-	.sortByMeta('usedCount', 'asc') // вторая сортировка по использованию
-	.sortBy('country') // третья сортировка по стране
+	.sortBy('speed', 'desc') // first sort: by speed
+	.sortByMeta('usedCount', 'asc') // second sort: by usage
+	.sortBy('country') // third sort: by country
 	.select(Selectors.first);
 
-// Пагинация
+// Pagination
 const page2Proxies = proxies
 	.query()
 	.where((e) => e.meta.active)
 	.sortBy('speed', 'desc')
-	.offset(20) // пропустить первые 20
-	.take(10) // взять следующие 10
+	.offset(20) // skip the first 20
+	.take(10) // take the next 10
 	.toArray();
 
-// Получить все отфильтрованные
+// Get all filtered entries
 const activeProxies = proxies
 	.query()
 	.where((e) => e.meta.active)
 	.toArray();
 
-// Преобразовать query в Pool
+// Convert query into a Pool
 const usProxiesPool = proxies
 	.query()
 	.where((e) => e.data.country === 'US')
 	.toPool();
 
-// ========== КОМБИНИРОВАНИЕ ПУЛОВ ==========
+// ========== POOL COMBINATION ==========
 
 const usProxies = new Pool<Proxy>();
 const ukProxies = new Pool<Proxy>();
 const euProxies = new Pool<Proxy>();
 
-// Merge - добавить все из другого пула
+// Merge - add everything from another pool
 usProxies.merge(ukProxies);
 
-// Merge с query - добавить только отфильтрованные
+// Merge with a query - add only the filtered entries
 usProxies.merge(euProxies.query().where((e) => e.data.speed > 100));
 
-// Merge уникальных по IP
+// Merge unique by IP
 usProxies.mergeUnique(ukProxies, 'ip');
 
-// Merge уникальных по комбинации полей
+// Merge unique by a field combination
 usProxies.mergeUnique(ukProxies, (p) => `${p.ip}:${p.provider}`);
 
-// Union - объединение без дубликатов
+// Union - merge without duplicates
 usProxies.union(ukProxies, (a, b) => a.ip === b.ip);
 
-// Intersect - оставить только общие
+// Intersect - keep only common entries
 usProxies.intersect(ukProxies, (a, b) => a.ip === b.ip);
 
-// Difference - удалить те что есть в ukProxies
+// Difference - remove the ones present in ukProxies
 usProxies.difference(ukProxies, (a, b) => a.ip === b.ip);
 
-// Deduplicate - удалить дубликаты внутри пула
+// Deduplicate - remove duplicates inside the pool
 proxies.deduplicate('ip');
 
-// ========== СТАТИЧЕСКИЕ МЕТОДЫ ==========
+// ========== STATIC METHODS ==========
 
-// Merge из нескольких пулов
+// Merge from multiple pools
 const allProxies = Pool.merge(usProxies, ukProxies, euProxies);
 
-// Уникальные из нескольких пулов
+// Unique entries from multiple pools
 const uniqueProxies = Pool.mergeUnique([usProxies, ukProxies, euProxies], 'ip');
 
-// Уникальные с приоритетом (оставляем самый быстрый)
+// Unique with priority (keep the fastest)
 const bestProxies = Pool.mergeUniqueWith([usProxies, ukProxies, euProxies], 'ip', (existing, duplicate) => (existing.data.speed > duplicate.data.speed ? existing : duplicate));
 
-// Пересечение двух пулов
+// Intersection of two pools
 const commonProxies = Pool.intersect(usProxies, ukProxies, (a, b) => a.provider === b.provider);
 
-// Группировка нескольких пулов
+// Group multiple pools
 const byCountry = Pool.groupBy([usProxies, ukProxies, euProxies], 'country');
 // Map { 'US' => Pool, 'UK' => Pool, 'DE' => Pool, ... }
 
 const germanProxies = byCountry.get('DE');
 
-// ========== ТРАНСФОРМАЦИИ ==========
+// ========== TRANSFORMATIONS ==========
 
-// Clone - клонирование пула
+// Clone - clone the pool
 const backupProxies = proxies.clone();
 
-// Partition - разделение на два пула
+// Partition - split into two pools
 const [active, inactive] = proxies.partition((e) => e.meta.active === true);
 
-// Sample - взять N случайных
+// Sample - take N random entries
 const randomSample = proxies.sample(10);
 
-// Shuffle - перемешать
+// Shuffle - randomize order
 proxies.shuffle();
 
-// GroupBy на уровне инстанса
+// GroupBy at the instance level
 const proxyGroups = proxies.groupBy('provider');
 // Map { 'ProviderA' => Pool, 'ProviderB' => Pool, ... }
 
 const providerAProxies = proxyGroups.get('ProviderA');
 
-// Группировка по кастомной функции
+// Group by a custom function
 const speedGroups = proxies.groupBy((p) => (p.speed < 100 ? 'slow' : p.speed < 300 ? 'medium' : 'fast'));
 // Map { 'slow' => Pool, 'medium' => Pool, 'fast' => Pool }
 
-// ========== СВЯЗЫВАНИЕ ПУЛОВ ==========
+// ========== POOL BINDING ==========
 
 const binder = new PoolBinder()
 	.bind('proxy', proxies)
@@ -452,25 +452,25 @@ const combo = binder.execute();
 // }
 
 if (!combo) {
-	console.log('Не удалось найти комбинацию');
+	console.log('Failed to find a combination');
 }
 
-// ========== СЛОЖНЫЙ WORKFLOW ==========
+// ========== COMPLEX WORKFLOW ==========
 
-// 1. Загружаем прокси из трёх источников
+// 1. Load proxies from three sources
 const provider1 = new Pool<Proxy>();
 const provider2 = new Pool<Proxy>();
 const provider3 = new Pool<Proxy>();
 
-// Загрузка данных...
+// Loading data...
 
-// 2. Объединяем с приоритетом по скорости
+// 2. Merge with speed priority
 const masterPool = Pool.mergeUniqueWith([provider1, provider2, provider3], 'ip', (existing, duplicate) => (existing.data.speed > duplicate.data.speed ? existing : duplicate));
 
-// 3. Группируем по странам
+// 3. Group by country
 const poolsByCountry = masterPool.groupBy('country');
 
-// 4. Для каждой страны берём топ-20 по скорости
+// 4. For each country, take top-20 by speed
 const topPools = new Map<string, Pool<Proxy>>();
 
 poolsByCountry.forEach((pool, country) => {
@@ -484,18 +484,18 @@ poolsByCountry.forEach((pool, country) => {
 	topPools.set(country, top20);
 });
 
-// 5. Работаем с топ-пулами
+// 5. Work with the top pools
 const usTop = topPools.get('US')!;
 
-// Хук для ротации при большом использовании
+// Rotation hook for heavy usage
 usTop.on('get', (entry) => {
 	if (entry.meta.usedCount > 50) {
-		// Деактивируем перегруженный прокси
+		// Deactivate the overloaded proxy
 		entry.meta.active = false;
 	}
 });
 
-// 6. Связываем с аккаунтами и выполняем задачи
+// 6. Bind with accounts and run tasks
 for (let i = 0; i < 100; i++) {
 	const combo = new PoolBinder()
 		.bind('proxy', usTop)
@@ -507,43 +507,43 @@ for (let i = 0; i < 100; i++) {
 		.execute();
 
 	if (!combo) {
-		console.log('Нет доступных комбинаций');
+		console.log('No combinations available');
 		break;
 	}
 
-	// Выполняем задачу с combo.proxy и combo.account
+	// Run the task with combo.proxy and combo.account
 	await performTask(combo.proxy, combo.account);
 }
 ```
 
 ---
 
-## План реализации
+## Implementation Plan
 
-### Этап 1: Базовая структура (Core)
+### Stage 1: Basic Structure (Core)
 
-**Файлы:**
+**Files:**
 
--   `src/types.ts` - базовые типы
--   `src/PoolEntry.ts` - класс или тип PoolEntry
--   `src/Pool.ts` - основной класс Pool
--   `src/PoolQuery.ts` - класс Query
+-   `src/types.ts` - core types
+-   `src/PoolEntry.ts` - PoolEntry class or type
+-   `src/Pool.ts` - main Pool class
+-   `src/PoolQuery.ts` - Query class
 
-**Задачи:**
+**Tasks:**
 
-1. Определить базовые типы: `PoolEntry<T>`, `Filter<T>`, `Selector<T>`
-2. Реализовать `Pool<T>`:
-    - Конструктор и приватное поле `entries: PoolEntry<T>[]`
+1. Define core types: `PoolEntry<T>`, `Filter<T>`, `Selector<T>`
+2. Implement `Pool<T>`:
+    - Constructor and private `entries: PoolEntry<T>[]` field
     - CRUD: `add()`, `remove()`
-    - Query: `query()` возвращает `PoolQuery<T>`
-    - Геттеры: `size`, `all`, `allEntries`
-3. Реализовать `PoolQuery<T>`:
-    - Поля: `entries`, `filters[]`, `sorters[]`, `skipCount`, `takeCount`
-    - Методы: `where()`, `whereOr()`
-    - Метод `materialize()` - применяет фильтры и сортировки
-    - Методы: `select()`, `toArray()`, `count`
+    - Query: `query()` returns `PoolQuery<T>`
+    - Getters: `size`, `all`, `allEntries`
+3. Implement `PoolQuery<T>`:
+    - Fields: `entries`, `filters[]`, `sorters[]`, `skipCount`, `takeCount`
+    - Methods: `where()`, `whereOr()`
+    - `materialize()` method - applies filters and sorting
+    - Methods: `select()`, `toArray()`, `count`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Pool: add and query', () => {
@@ -561,22 +561,22 @@ test('Pool: add and query', () => {
 
 ---
 
-### Этап 2: Сортировка
+### Stage 2: Sorting
 
-**Файлы:**
+**Files:**
 
--   `src/PoolQuery.ts` - расширение
+-   `src/PoolQuery.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать перегрузки `sortBy()`:
+1. Implement `sortBy()` overloads:
     - `sortBy(fn: Function)`
     - `sortBy(field: keyof T, order?: 'asc' | 'desc')`
-2. Реализовать `sortByMeta(field: string, order?: 'asc' | 'desc')`
-3. Chainable композиция - массив `sorters[]`
-4. В `materialize()` применять все sorters последовательно
+2. Implement `sortByMeta(field: string, order?: 'asc' | 'desc')`
+3. Chainable composition - `sorters[]` array
+4. Apply all sorters sequentially in `materialize()`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Query: chained sorting', () => {
@@ -592,19 +592,19 @@ test('Query: chained sorting', () => {
 
 ---
 
-### Этап 3: Пагинация
+### Stage 3: Pagination
 
-**Файлы:**
+**Files:**
 
--   `src/PoolQuery.ts` - расширение
+-   `src/PoolQuery.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Добавить поля `offsetCount`, `takeCount`
-2. Реализовать `offset(count)` и `take(count)`
-3. В `materialize()` применять `slice(offsetCount, offsetCount + takeCount)`
+1. Add `offsetCount`, `takeCount` fields
+2. Implement `offset(count)` and `take(count)`
+3. Apply `slice(offsetCount, offsetCount + takeCount)` in `materialize()`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Query: pagination', () => {
@@ -619,21 +619,21 @@ test('Query: pagination', () => {
 
 ---
 
-### Этап 4: Селекторы
+### Stage 4: Selectors
 
-**Файлы:**
+**Files:**
 
--   `src/Selectors.ts` - встроенные селекторы
+-   `src/Selectors.ts` - built-in selectors
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `Selectors.random`
-2. Реализовать `Selectors.first`
-3. Реализовать `Selectors.last`
-4. Реализовать `Selectors.minBy(field)`
-5. Реализовать `Selectors.weighted(weightFn)`
+1. Implement `Selectors.random`
+2. Implement `Selectors.first`
+3. Implement `Selectors.last`
+4. Implement `Selectors.minBy(field)`
+5. Implement `Selectors.weighted(weightFn)`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Selectors: minBy', () => {
@@ -648,24 +648,24 @@ test('Selectors: minBy', () => {
 
 ---
 
-### Этап 5: События (Events)
+### Stage 5: Events
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
+-   `src/Pool.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Добавить поле `eventHandlers: Map<string, Function[]>`
-2. Реализовать `on(event, handler)`
-3. Реализовать `off(event, handler)`
-4. Реализовать `emit(event, ...args)` (private/protected)
-5. Вызывать события в нужных местах:
+1. Add `eventHandlers: Map<string, Function[]>` field
+2. Implement `on(event, handler)`
+3. Implement `off(event, handler)`
+4. Implement `emit(event, ...args)` (private/protected)
+5. Emit events at the right places:
     - `add()` → emit('add', entry)
     - `remove()` → emit('remove', entry)
     - `select()` → emit('beforeSelect', entries), emit('afterSelect', entry), emit('get', entry)
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Events: on get', () => {
@@ -686,20 +686,20 @@ test('Events: on get', () => {
 
 ---
 
-### Этап 6: Wrap (метод обертки)
+### Stage 6: Wrap (wrapper method)
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
--   `src/PoolQuery.ts` - расширение
+-   `src/Pool.ts` - extension
+-   `src/PoolQuery.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `Pool.wrap<K extends keyof this>(method, wrapper)`
-2. Реализовать `PoolQuery.wrap<K extends keyof this>(method, wrapper)`
-3. Сохранять оригинальный метод и подменять на wrapper
+1. Implement `Pool.wrap<K extends keyof this>(method, wrapper)`
+2. Implement `PoolQuery.wrap<K extends keyof this>(method, wrapper)`
+3. Keep the original method and replace it with the wrapper
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Wrap: add logging', () => {
@@ -720,19 +720,19 @@ test('Wrap: add logging', () => {
 
 ---
 
-### Этап 7: Batch операции
+### Stage 7: Batch Operations
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
+-   `src/Pool.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `addBatch(items[])`
-2. Реализовать `removeBatch(predicates[])`
-3. Генерировать события `batchAdd`, `batchRemove`
+1. Implement `addBatch(items[])`
+2. Implement `removeBatch(predicates[])`
+3. Emit `batchAdd`, `batchRemove` events
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Batch: addBatch', () => {
@@ -749,22 +749,22 @@ test('Batch: addBatch', () => {
 
 ---
 
-### Этап 8: Комбинирование пулов (инстанс методы)
+### Stage 8: Pool Combination (instance methods)
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
+-   `src/Pool.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `merge(source: Pool<T> | PoolQuery<T>)`
-2. Реализовать `mergeUnique(source, uniqueBy)`
-3. Реализовать `union(other, compareFn?)`
-4. Реализовать `intersect(other, compareFn?)`
-5. Реализовать `difference(other, compareFn?)`
-6. Реализовать `deduplicate(uniqueBy)`
+1. Implement `merge(source: Pool<T> | PoolQuery<T>)`
+2. Implement `mergeUnique(source, uniqueBy)`
+3. Implement `union(other, compareFn?)`
+4. Implement `intersect(other, compareFn?)`
+5. Implement `difference(other, compareFn?)`
+6. Implement `deduplicate(uniqueBy)`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Pool: merge unique', () => {
@@ -783,21 +783,21 @@ test('Pool: merge unique', () => {
 
 ---
 
-### Этап 9: Трансформации
+### Stage 9: Transformations
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
+-   `src/Pool.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `clone()`
-2. Реализовать `partition(predicate)` → возвращает `[Pool<T>, Pool<T>]`
-3. Реализовать `sample(count)`
-4. Реализовать `shuffle()`
-5. Реализовать `groupBy(groupBy)` → возвращает `Map<any, Pool<T>>`
+1. Implement `clone()`
+2. Implement `partition(predicate)` → returns `[Pool<T>, Pool<T>]`
+3. Implement `sample(count)`
+4. Implement `shuffle()`
+5. Implement `groupBy(groupBy)` → returns `Map<any, Pool<T>>`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Pool: partition', () => {
@@ -827,21 +827,21 @@ test('Pool: groupBy', () => {
 
 ---
 
-### Этап 10: Статические методы
+### Stage 10: Static Methods
 
-**Файлы:**
+**Files:**
 
--   `src/Pool.ts` - расширение
+-   `src/Pool.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `static merge<T>(...pools: Pool<T>[]): Pool<T>`
-2. Реализовать `static mergeUnique<T>(sources, uniqueBy): Pool<T>`
-3. Реализовать `static mergeUniqueWith<T>(sources, uniqueBy, resolveDuplicate): Pool<T>`
-4. Реализовать `static intersect<T>(pool1, pool2, compareFn?): Pool<T>`
-5. Реализовать `static groupBy<T>(sources, groupBy): Map<any, Pool<T>>`
+1. Implement `static merge<T>(...pools: Pool<T>[]): Pool<T>`
+2. Implement `static mergeUnique<T>(sources, uniqueBy): Pool<T>`
+3. Implement `static mergeUniqueWith<T>(sources, uniqueBy, resolveDuplicate): Pool<T>`
+4. Implement `static intersect<T>(pool1, pool2, compareFn?): Pool<T>`
+5. Implement `static groupBy<T>(sources, groupBy): Map<any, Pool<T>>`
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Pool.mergeUnique: from multiple pools', () => {
@@ -875,18 +875,18 @@ test('Pool.mergeUniqueWith: priority by speed', () => {
 
 ---
 
-### Этап 11: Query.toPool()
+### Stage 11: Query.toPool()
 
-**Файлы:**
+**Files:**
 
--   `src/PoolQuery.ts` - расширение
+-   `src/PoolQuery.ts` - extension
 
-**Задачи:**
+**Tasks:**
 
-1. Реализовать `toPool(): Pool<T>`
-2. Создать новый Pool и скопировать в него отфильтрованные entries
+1. Implement `toPool(): Pool<T>`
+2. Create a new Pool and copy the filtered entries into it
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('Query: toPool', () => {
@@ -907,31 +907,31 @@ test('Query: toPool', () => {
 
 ---
 
-### Этап 12: PoolBinder
+### Stage 12: PoolBinder
 
-**Файлы:**
+**Files:**
 
--   `src/PoolBinder.ts` - новый класс
+-   `src/PoolBinder.ts` - new class
 
-**Задачи:**
+**Tasks:**
 
-1. Создать класс `PoolBinder`
-2. Добавить поля:
+1. Create the `PoolBinder` class
+2. Add fields:
     - `pools: Map<string, Pool<any>>`
     - `filters: Map<string, Filter<any>>`
     - `selectors: Map<string, Selector<any>>`
-3. Реализовать методы:
+3. Implement methods:
     - `bind(name, pool)`
     - `where(poolName, filter)`
     - `selectWith(poolName, selector)`
-    - `execute()` → возвращает `Record<string, any> | null`
-4. В `execute()`:
-    - Проходим по всем пулам
-    - Применяем фильтры и селекторы
-    - Если хоть один вернул `null` → возвращаем `null`
-    - Иначе возвращаем объект с результатами
+    - `execute()` → returns `Record<string, any> | null`
+4. In `execute()`:
+    - Iterate over all pools
+    - Apply filters and selectors
+    - If any returns `null` → return `null`
+    - Otherwise return an object with the results
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('PoolBinder: basic binding', () => {
@@ -965,7 +965,7 @@ test('PoolBinder: returns null when no match', () => {
 	const binder = new PoolBinder()
 		.bind('proxy', proxies)
 		.bind('account', accounts)
-		.where('proxy', (e) => e.data.country === 'US'); // не найдет
+		.where('proxy', (e) => e.data.country === 'US'); // won't find a match
 
 	const combo = binder.execute();
 
@@ -975,16 +975,16 @@ test('PoolBinder: returns null when no match', () => {
 
 ---
 
-### Этап 13: Типобезопасность и exports
+### Stage 13: Type Safety and Exports
 
-**Файлы:**
+**Files:**
 
--   `src/index.ts` - главный файл экспортов
--   `src/types.ts` - экспорт типов
+-   `src/index.ts` - main exports file
+-   `src/types.ts` - type exports
 
-**Задачи:**
+**Tasks:**
 
-1. Создать `src/index.ts`:
+1. Create `src/index.ts`:
 
 ```typescript
 export { Pool } from './Pool';
@@ -994,16 +994,16 @@ export { Selectors } from './Selectors';
 export type { PoolEntry, Filter, Selector } from './types';
 ```
 
-2. Проверить все generic типы
-3. Убедиться что TypeScript корректно выводит типы:
+2. Check all generic types
+3. Make sure TypeScript infers types correctly:
 
 ```typescript
 const pool = new Pool<{ id: number }>();
 const result = pool.query().select(Selectors.first);
-// result должен быть типа: {id: number} | null
+// result must be of type: {id: number} | null
 ```
 
-**Тесты:**
+**Tests:**
 
 ```typescript
 test('TypeScript: correct type inference', () => {
@@ -1013,11 +1013,11 @@ test('TypeScript: correct type inference', () => {
 	const result = pool.query().select(Selectors.first);
 
 	if (result) {
-		// TypeScript должен знать про поля id и name
+		// TypeScript must know about the id and name fields
 		expect(result.id).toBe(1);
 		expect(result.name).toBe('test');
 
-		// @ts-expect-error - поле не существует
+		// @ts-expect-error - field doesn't exist
 		// expect(result.invalid).toBe(1)
 	}
 });
@@ -1025,29 +1025,29 @@ test('TypeScript: correct type inference', () => {
 
 ---
 
-### Этап 14: Документация и примеры
+### Stage 14: Documentation and Examples
 
-**Файлы:**
+**Files:**
 
--   `README.md` - главная документация
--   `examples/` - примеры использования
--   JSDoc комментарии в коде
+-   `README.md` - main documentation
+-   `examples/` - usage examples
+-   JSDoc comments in the code
 
-**Задачи:**
+**Tasks:**
 
-1. Написать README.md:
-    - Введение и суть проекта
-    - Установка
+1. Write README.md:
+    - Introduction and project essence
+    - Installation
     - Quick start
-    - Основные концепции
+    - Core concepts
     - API Reference
-    - Примеры использования
-2. Создать примеры в `examples/`:
-    - `examples/basic.ts` - простое использование
-    - `examples/proxy-pool.ts` - пример с прокси
-    - `examples/database-integration.ts` - интеграция с БД через wrap
-    - `examples/advanced-workflow.ts` - сложный workflow
-3. Добавить JSDoc для всех публичных методов:
+    - Usage examples
+2. Create examples in `examples/`:
+    - `examples/basic.ts` - simple usage
+    - `examples/proxy-pool.ts` - proxy example
+    - `examples/database-integration.ts` - DB integration via wrap
+    - `examples/advanced-workflow.ts` - complex workflow
+3. Add JSDoc for all public methods:
 
 ```typescript
 /**
@@ -1064,25 +1064,25 @@ where(filter: Filter<T>): this
 
 ---
 
-### Этап 15: Оптимизация и производительность
+### Stage 15: Optimization and Performance
 
-**Файлы:**
+**Files:**
 
--   Все существующие файлы
+-   All existing files
 
-**Задачи:**
+**Tasks:**
 
-1. **Профилирование:**
-    - Тесты с большими пулами (10k, 100k элементов)
-    - Замеры времени выполнения операций
-2. **Оптимизации:**
-    - Убрать лишние копирования массивов
-    - Оптимизировать `materialize()` - применять фильтры и сортировки за один проход
-    - Использовать `Array.prototype` методы эффективно
-    - Переиспользовать объекты где возможно
+1. **Profiling:**
+    - Tests with large pools (10k, 100k elements)
+    - Measure operation execution times
+2. **Optimizations:**
+    - Remove unnecessary array copies
+    - Optimize `materialize()` - apply filters and sorting in a single pass
+    - Use `Array.prototype` methods efficiently
+    - Reuse objects where possible
 3. **Memory leaks:**
-    - Проверить что события корректно отписываются
-    - Проверить что Map/Set очищаются
+    - Verify events are properly unsubscribed
+    - Verify Map/Set are cleared
 4. **Benchmarks:**
 
 ```typescript
@@ -1091,7 +1091,7 @@ import { Pool, Selectors } from '../src';
 
 const pool = new Pool<{ id: number; value: number }>();
 
-// Подготовка
+// Preparation
 for (let i = 0; i < 100000; i++) {
 	pool.add({ id: i, value: Math.random() * 1000 });
 }
@@ -1108,15 +1108,15 @@ console.timeEnd('filter + sort + select');
 
 ---
 
-### Этап 16: Тестирование граничных случаев
+### Stage 16: Edge Case Testing
 
-**Файлы:**
+**Files:**
 
 -   `tests/edge-cases.test.ts`
 
-**Задачи:**
+**Tasks:**
 
-1. Пустой пул:
+1. Empty pool:
 
 ```typescript
 test('Empty pool: query returns null', () => {
@@ -1126,7 +1126,7 @@ test('Empty pool: query returns null', () => {
 });
 ```
 
-2. Один элемент:
+2. Single element:
 
 ```typescript
 test('Single element: all operations work', () => {
@@ -1138,7 +1138,7 @@ test('Single element: all operations work', () => {
 });
 ```
 
-3. Дубликаты:
+3. Duplicates:
 
 ```typescript
 test('Duplicates: deduplicate works', () => {
@@ -1152,7 +1152,7 @@ test('Duplicates: deduplicate works', () => {
 });
 ```
 
-4. Циклические операции:
+4. Circular operations:
 
 ```typescript
 test('Circular merge: does not break', () => {
@@ -1170,7 +1170,7 @@ test('Circular merge: does not break', () => {
 });
 ```
 
-5. Большие объемы:
+5. Large volumes:
 
 ```typescript
 test('Large pool: 100k elements', () => {
@@ -1194,17 +1194,17 @@ test('Large pool: 100k elements', () => {
 
 ---
 
-### Этап 17: Build и публикация
+### Stage 17: Build and Publishing
 
-**Файлы:**
+**Files:**
 
 -   `package.json`
 -   `tsconfig.json`
 -   `.npmignore`
 
-**Задачи:**
+**Tasks:**
 
-1. Настроить `tsconfig.json`:
+1. Configure `tsconfig.json`:
 
 ```json
 {
@@ -1223,7 +1223,7 @@ test('Large pool: 100k elements', () => {
 }
 ```
 
-2. Настроить `package.json`:
+2. Configure `package.json`:
 
 ```json
 {
@@ -1251,7 +1251,7 @@ test('Large pool: 100k elements', () => {
 }
 ```
 
-3. Создать `.npmignore`:
+3. Create `.npmignore`:
 
 ```
 src/
@@ -1263,15 +1263,15 @@ jest.config.js
 *.test.ts
 ```
 
-4. Сборка и проверка:
+4. Build and verify:
 
 ```bash
 npm run build
 npm test
-npm pack  # проверить что попадет в пакет
+npm pack  # verify what ends up in the package
 ```
 
-5. Публикация:
+5. Publishing:
 
 ```bash
 npm publish
@@ -1279,17 +1279,17 @@ npm publish
 
 ---
 
-## Структура проекта (финальная)
+## Project Structure (Final)
 
 ```
 pool-lib/
 ├── src/
-│   ├── types.ts              # Базовые типы
-│   ├── Pool.ts               # Класс Pool
-│   ├── PoolQuery.ts          # Класс PoolQuery
-│   ├── PoolBinder.ts         # Класс PoolBinder
-│   ├── Selectors.ts          # Встроенные селекторы
-│   └── index.ts              # Главный экспорт
+│   ├── types.ts              # Core types
+│   ├── Pool.ts               # Pool class
+│   ├── PoolQuery.ts          # PoolQuery class
+│   ├── PoolBinder.ts         # PoolBinder class
+│   ├── Selectors.ts          # Built-in selectors
+│   └── index.ts              # Main exports
 ├── tests/
 │   ├── Pool.test.ts
 │   ├── PoolQuery.test.ts
@@ -1316,32 +1316,32 @@ pool-lib/
 
 ---
 
-## Приоритизация этапов
+## Stage Prioritization
 
-### MVP (Минимально жизнеспособный продукт):
+### MVP (Minimum Viable Product):
 
-1. ✅ Этап 1: Базовая структура
-2. ✅ Этап 2: Сортировка
-3. ✅ Этап 4: Селекторы
-4. ✅ Этап 5: События
+1. ✅ Stage 1: Basic Structure
+2. ✅ Stage 2: Sorting
+3. ✅ Stage 4: Selectors
+4. ✅ Stage 5: Events
 
-**После MVP уже можно использовать библиотеку.**
+**The library is usable after MVP.**
 
-### Полная функциональность:
+### Full functionality:
 
-5. Этап 3: Пагинация
-6. Этап 6: Wrap
-7. Этап 7: Batch операции
-8. Этап 8: Комбинирование пулов
-9. Этап 9: Трансформации
-10. Этап 10: Статические методы
-11. Этап 11: Query.toPool()
-12. Этап 12: PoolBinder
+5. Stage 3: Pagination
+6. Stage 6: Wrap
+7. Stage 7: Batch Operations
+8. Stage 8: Pool Combination
+9. Stage 9: Transformations
+10. Stage 10: Static Methods
+11. Stage 11: Query.toPool()
+12. Stage 12: PoolBinder
 
-### Финализация:
+### Finalization:
 
-13. Этап 13: Типобезопасность
-14. Этап 14: Документация
-15. Этап 15: Оптимизация
-16. Этап 16: Граничные случаи
-17. Этап 17: Build и публикация
+13. Stage 13: Type Safety
+14. Stage 14: Documentation
+15. Stage 15: Optimization
+16. Stage 16: Edge Cases
+17. Stage 17: Build and Publishing

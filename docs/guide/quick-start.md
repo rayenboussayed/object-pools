@@ -5,13 +5,13 @@ Get started with Pools in 5 minutes.
 ## Installation
 
 ```bash
-bun add pools
+npm install pools
 ```
 
 ## Basic Example
 
 ```typescript
-import { Pool, Selectors } from 'pools';
+import { Pool, Selectors } from 'object-pools';
 
 // 1. Define your data type
 interface User {
@@ -59,7 +59,7 @@ const leastUsed = users.query().select(Selectors.minBy('usedCount'));
 ## Using Selectors
 
 ```typescript
-import { Selectors } from 'pools';
+import { Selectors } from 'object-pools';
 
 // Random selection
 const random = users.query().select(Selectors.random);
@@ -72,7 +72,7 @@ const last = users.query().select(Selectors.last);
 const youngest = users.query().select(Selectors.minBy('age'));
 
 // Weighted random (prefer less-used)
-const weighted = users.query().select(Selectors.weighted((e) => 1 / (e.meta.usedCount + 1)));
+const weighted = users.query().select(Selectors.weighted((entry) => 1 / (entry.meta.usedCount + 1)));
 ```
 
 ## Complex Queries
@@ -124,12 +124,12 @@ users.delete('id', '1');
 Combine multiple pools for complex selections:
 
 ```typescript
-import { Binder } from 'pools';
+import { Binder } from 'object-pools';
 
 const proxies = new Pool<Proxy>();
 const accounts = new Pool<Account>();
 
-const combo = new PoolBinder()
+const combo = new Binder()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
 	.where('proxy', ({ data }) => data.country === 'US')
@@ -188,4 +188,4 @@ pool.on('afterSelect', (data) => {
 
 -   [API Reference](/api/) - Complete API documentation
 -   [Examples](/examples/) - Real-world usage examples
--   Browse the source code on [GitHub](https://github.com/phederal/pools)
+-   Browse the source code on [GitHub](https://github.com/rayenboussayed/object-pools)

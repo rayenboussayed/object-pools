@@ -8,23 +8,30 @@ Binder is perfect when you need to select items from multiple pools at once, lik
 
 ## Constructor
 
+`Binder<TMap>` is generic over a type map that links each bound name to the type of its pool's data:
+
 ```typescript
-const binder = new Binder();
+interface Proxy { ip: string; country: string; }
+interface Account { username: string; service: string; }
+
+const binder = new Binder<{ proxy: Proxy; account: Account }>();
 ```
+
+Every name passed to `bind()`, `where()`, and `selectWith()` is checked against `TMap`, and `execute()` returns a fully typed result.
 
 ## Methods
 
 ### bind()
 
-Binds a pool with a name.
+Binds a pool with a name. The pool can carry any metadata type; only its data type must match `TMap[name]`.
 
-```typescript
-binder.bind<T>(name: string, pool: Pool<T>): Binder
+```text
+binder.bind<K extends keyof TMap & string>(name: K, pool: Pool<TMap[K]>): this
 ```
 
 **Example:**
 ```typescript
-const binder = new Binder()
+const binder = new Binder<{ proxy: Proxy; account: Account; service: Service }>()
   .bind('proxy', proxies)
   .bind('account', accounts)
   .bind('service', services);
@@ -34,8 +41,8 @@ const binder = new Binder()
 
 Adds a filter for a specific pool.
 
-```typescript
-binder.where<T>(poolName: string, filter: Filter<T>): Binder
+```text
+binder.where<K extends keyof TMap & string>(poolName: K, filter: Filter<TMap[K]>): this
 ```
 
 **Example:**
@@ -49,13 +56,13 @@ binder
 
 Sets the selector for a specific pool.
 
-```typescript
-binder.selectWith<T>(poolName: string, selector: Selector<T>): Binder
+```text
+binder.selectWith<K extends keyof TMap & string>(poolName: K, selector: Selector<TMap[K]>): this
 ```
 
 **Example:**
 ```typescript
-import { Selectors } from 'pools';
+import { Selectors } from 'object-pools';
 
 binder
   .selectWith('proxy', Selectors.minBy('usedCount'))
@@ -64,10 +71,18 @@ binder
 
 ### execute()
 
-Executes the binding and returns selected items from all pools.
+Executes the binding and returns the selected item from each pool.
+
+```text
+binder.execute(): BinderResult<TMap> | null
+```
+
+`BinderResult<TMap>` maps every bound name to its data type:
 
 ```typescript
-binder.execute(): Record<string, any> | null
+type BinderResult<TMap extends Record<string, any>> = {
+  [K in keyof TMap]: TMap[K];
+};
 ```
 
 Returns `null` if any pool has no matching entries.
@@ -77,16 +92,20 @@ Returns `null` if any pool has no matching entries.
 const result = binder.execute();
 
 if (result) {
-  console.log(result.proxy);  // Selected proxy
-  console.log(result.account); // Selected account
-  console.log(result.service); // Selected service
+  console.log(result.proxy);  // Proxy
+  console.log(result.account); // Account
+  console.log(result.service); // Service
 }
 ```
 
 ## Complete Example
 
 ```typescript
-import { Pool, Binder, Selectors } from 'pools';
+import { Pool, Binder, Selectors } from 'object-pools';
+
+interface Proxy { ip: string; country: string; speed: number; }
+interface Account { username: string; service: string; }
+interface Service { name: string; url: string; }
 
 // Create pools
 const proxies = new Pool<Proxy>();
@@ -99,7 +118,7 @@ accounts.add({ username: 'user1', service: 'twitter' });
 services.add({ name: 'API', url: 'https://api.twitter.com' });
 
 // Bind pools together
-const combo = new Binder()
+const combo = new Binder<{ proxy: Proxy; account: Account; service: Service }>()
   .bind('proxy', proxies)
   .bind('account', accounts)
   .bind('service', services)
@@ -127,13 +146,13 @@ if (combo) {
 Allocate multiple resources for a task:
 
 ```typescript
-const resources = new Binder()
+const resources = new Binder<{ proxy: Proxy; account: Account }>()
   .bind('proxy', proxies)
   .bind('account', accounts)
   .where('proxy', ({ meta }) => meta.usedCount < 10)
-  .where('account', e => !e.meta.banned)
+  .where('account', entry => !entry.meta.banned)
   .selectWith('proxy', Selectors.minBy('usedCount'))
-  .selectWith('account', Selectors.weighted(e => 1 / (e.meta.failCount + 1)))
+  .selectWith('account', Selectors.weighted(entry => 1 / (entry.meta.failCount + 1)))
   .execute();
 ```
 
@@ -142,11 +161,11 @@ const resources = new Binder()
 Select a server and session together:
 
 ```typescript
-const combo = new Binder()
+const combo = new Binder<{ server: Server; session: Session }>()
   .bind('server', servers)
   .bind('session', sessions)
   .where('server', ({ data }) => data.region === 'EU')
-  .where('session', e => !e.meta.expired)
+  .where('session', entry => !entry.meta.expired)
   .selectWith('server', Selectors.minBy('load'))
   .selectWith('session', Selectors.random)
   .execute();
@@ -156,7 +175,7 @@ const combo = new Binder()
 
 ```typescript
 // Find matching proxy and account from different providers
-const result = new Binder()
+const result = new Binder<{ proxy: Proxy; account: Account }>()
   .bind('proxy', proxies)
   .bind('account', accounts)
   .where('proxy', ({ data }) => data.provider === 'ProviderA')

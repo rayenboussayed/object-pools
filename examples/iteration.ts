@@ -13,7 +13,7 @@ interface Product {
 
 const products = new Pool<Product>();
 
-// Добавляем продукты
+// Add products
 products.addBatch([
 	{ data: { id: 'p1', name: 'Laptop', price: 1000, category: 'Electronics', inStock: true }, meta: { sold: 5 } },
 	{ data: { id: 'p2', name: 'Mouse', price: 25, category: 'Electronics', inStock: true }, meta: { sold: 20 } },
@@ -50,31 +50,31 @@ console.log('\n=== filter: In stock products ===\n');
 
 const inStockEntries = products.filter((entry) => entry.data.inStock);
 console.log(`In stock: ${inStockEntries.length} products`);
-inStockEntries.forEach((entry) => {
+for (const entry of inStockEntries) {
 	console.log(`  - ${entry.data.name} ($${entry.data.price})`);
-});
+}
 
 // ========== REDUCE ==========
 
 console.log('\n=== reduce: Calculate totals ===\n');
 
-// Общая стоимость всех продуктов
+// Total value of all products
 const totalValue = products.reduce((sum, entry) => sum + entry.data.price, 0);
 console.log(`Total product value: $${totalValue}`);
 
-// Общее количество продаж
+// Total units sold
 const totalSold = products.reduce((sum, entry) => sum + (entry.meta.sold || 0), 0);
 console.log(`Total units sold: ${totalSold}`);
 
-// Средняя цена
+// Average price
 const avgPrice = totalValue / products.size;
 console.log(`Average price: $${avgPrice.toFixed(2)}`);
 
-// Группировка по категориям (reduce to object)
-const byCategory = products.reduce<Record<string, number>>((acc, entry) => {
+// Group by category (reduce to object)
+const byCategory = products.reduce<Record<string, number>>((accumulator, entry) => {
 	const cat = entry.data.category;
-	acc[cat] = (acc[cat] || 0) + 1;
-	return acc;
+	accumulator[cat] = (accumulator[cat] || 0) + 1;
+	return accumulator;
 }, {});
 console.log('Products by category:', byCategory);
 
@@ -114,7 +114,7 @@ console.log(`Non-existent product index: ${notFoundIndex}`);
 
 console.log('\n=== Complex: Revenue calculation ===\n');
 
-// Рассчитываем выручку по каждому продукту
+// Calculate revenue for each product
 interface RevenueReport {
 	product: string;
 	unitPrice: number;
@@ -131,12 +131,12 @@ const revenueReport = products
 			revenue: entry.data.price * (entry.meta.sold || 0),
 		};
 	})
-	.sort((a, b) => b.revenue - a.revenue); // Сортируем по убыванию выручки
+	.sort((a, b) => b.revenue - a.revenue); // Sort by revenue descending
 
 console.log('Revenue report (sorted by revenue):');
-revenueReport.forEach((item, index) => {
+for (const [index, item] of revenueReport.entries()) {
 	console.log(`  ${index + 1}. ${item.product}: ${item.unitsSold} × $${item.unitPrice} = $${item.revenue}`);
-});
+}
 
 const totalRevenue = revenueReport.reduce((sum, item) => sum + item.revenue, 0);
 console.log(`\nTotal revenue: $${totalRevenue}`);
@@ -145,24 +145,26 @@ console.log(`\nTotal revenue: $${totalRevenue}`);
 
 console.log('\n=== Combining iteration with query ===\n');
 
-// Query для фильтрации, потом map для трансформации
+// Query to filter, then map to transform
 const electronicsNames = products
 	.query()
-	.where((e) => e.data.category === 'Electronics')
-	.where((e) => e.data.inStock)
+	.where((entry) => entry.data.category === 'Electronics')
+	.where((entry) => entry.data.inStock)
 	.toArray()
 	.map((p) => p.name);
 
 console.log('In-stock electronics:', electronicsNames.join(', '));
 
-// forEach на отфильтрованных данных
+// forEach on filtered data
 console.log('\nUpdating prices for furniture (+10%):');
 products.forEach((entry) => {
-	if (entry.data.category === 'Furniture') {
-		const oldPrice = entry.data.price;
-		entry.data.price = Math.round(entry.data.price * 1.1);
-		console.log(`  ${entry.data.name}: $${oldPrice} → $${entry.data.price}`);
+	if (entry.data.category !== 'Furniture') {
+		return;
 	}
+
+	const oldPrice = entry.data.price;
+	entry.data.price = Math.round(entry.data.price * 1.1);
+	console.log(`  ${entry.data.name}: $${oldPrice} → $${entry.data.price}`);
 });
 
 // ========== STATISTICS ==========
@@ -170,14 +172,14 @@ products.forEach((entry) => {
 console.log('\n=== Statistics using reduce ===\n');
 
 const stats = products.reduce(
-	(acc, entry) => {
+	(accumulator, entry) => {
 		return {
-			totalPrice: acc.totalPrice + entry.data.price,
-			totalSold: acc.totalSold + (entry.meta.sold || 0),
-			inStock: acc.inStock + (entry.data.inStock ? 1 : 0),
-			outOfStock: acc.outOfStock + (entry.data.inStock ? 0 : 1),
-			minPrice: Math.min(acc.minPrice, entry.data.price),
-			maxPrice: Math.max(acc.maxPrice, entry.data.price),
+			totalPrice: accumulator.totalPrice + entry.data.price,
+			totalSold: accumulator.totalSold + (entry.meta.sold || 0),
+			inStock: accumulator.inStock + (entry.data.inStock ? 1 : 0),
+			outOfStock: accumulator.outOfStock + (entry.data.inStock ? 0 : 1),
+			minPrice: Math.min(accumulator.minPrice, entry.data.price),
+			maxPrice: Math.max(accumulator.maxPrice, entry.data.price),
 		};
 	},
 	{
@@ -202,7 +204,7 @@ console.log(`  Average price: $${(stats.totalPrice / products.size).toFixed(2)}`
 
 console.log('\n=== Side effects: Batch operations ===\n');
 
-// Обновляем метаданные для всех продуктов
+// Update metadata for all products
 products.forEach((entry) => {
 	entry.meta.lastChecked = new Date();
 	entry.meta.discount = entry.data.price > 100 ? 0.1 : 0.05;
@@ -226,10 +228,10 @@ interface Category {
 
 const categories = new Pool<Category>();
 
-// Группируем продукты по категориям в пулы
-const categoryNames = Array.from(new Set(products.map((e) => e.data.category)));
+// Group products into pools by category
+const categoryNames = [...new Set(products.map((entry) => entry.data.category))];
 
-categoryNames.forEach((catName) => {
+for (const catName of categoryNames) {
 	const categoryProducts = new Pool<Product>();
 
 	products.forEach((entry) => {
@@ -239,15 +241,16 @@ categoryNames.forEach((catName) => {
 	});
 
 	categories.add({ name: catName, products: categoryProducts });
-});
+}
 
 console.log('Categories with products:');
 categories.forEach((catEntry) => {
-	const totalValue = catEntry.data.products.reduce((sum, prodEntry) => sum + prodEntry.data.price, 0);
+	const totalValue = catEntry.data.products.reduce((sum, productionEntry) => sum + productionEntry.data.price, 0);
 
 	console.log(`\n  ${catEntry.data.name} (${catEntry.data.products.size} products, $${totalValue} total):`);
-	catEntry.data.products.forEach((prodEntry) => {
-		console.log(`    - ${prodEntry.data.name}: $${prodEntry.data.price}`);
+	// eslint-disable-next-line unicorn/no-for-each -- Pool#forEach is a library method, not array iteration
+	catEntry.data.products.forEach((productionEntry) => {
+		console.log(`    - ${productionEntry.data.name}: $${productionEntry.data.price}`);
 	});
 });
 
@@ -255,14 +258,14 @@ categories.forEach((catEntry) => {
 
 console.log('\n=== Custom aggregation ===\n');
 
-// Находим самый продаваемый продукт
+// Find the best-selling product
 const bestSeller = products.reduce<{ entry: PoolEntry<Product> | null; maxSold: number }>(
-	(acc, entry) => {
+	(accumulator, entry) => {
 		const sold = entry.meta.sold || 0;
-		if (sold > acc.maxSold) {
+		if (sold > accumulator.maxSold) {
 			return { entry, maxSold: sold };
 		}
-		return acc;
+		return accumulator;
 	},
 	{ entry: null, maxSold: 0 }
 );
@@ -271,10 +274,10 @@ if (bestSeller.entry) {
 	console.log(`Best seller: ${bestSeller.entry.data.name} (${bestSeller.maxSold} units sold)`);
 }
 
-// Находим категорию с наибольшей выручкой
+// Find the category with the highest revenue
 const categoryRevenue = categories.map((catEntry) => {
-	const revenue = catEntry.data.products.reduce((sum, prodEntry) => {
-		return sum + prodEntry.data.price * (prodEntry.meta.sold || 0);
+	const revenue = catEntry.data.products.reduce((sum, productionEntry) => {
+		return sum + productionEntry.data.price * (productionEntry.meta.sold || 0);
 	}, 0);
 
 	return {

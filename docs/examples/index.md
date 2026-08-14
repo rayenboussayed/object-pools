@@ -7,6 +7,7 @@ Real-world examples of using the Pools library.
 - [Basic Usage](/examples/basic) - Simple CRUD operations and queries
 - [Proxy Pool](/examples/proxy-pool) - Managing proxies with filtering and selection
 - [Map-like Usage](/examples/map-like) - Using Pool as a Map replacement
+- [Iteration & Aggregation](/examples/iteration) - Iterating over pool data
 - [Game Service](/examples/game-service) - Complex multi-pool application
 
 ## Running Examples
@@ -14,10 +15,11 @@ Real-world examples of using the Pools library.
 All examples are in the `examples/` directory. Run them with:
 
 ```bash
-bun run examples/basic.ts
-bun run examples/proxy-pool.ts
-bun run examples/map-like.ts
-bun run examples/game-service.ts
+npm run example:basic
+npm run example:proxy-pool
+npm run example:map-like
+npm run example:iteration
+npm run example:game-service
 ```
 
 ## What Each Example Covers
@@ -53,6 +55,16 @@ bun run examples/game-service.ts
 - Events with Map-like operations
 
 [View Example](/examples/map-like)
+
+### Iteration & Aggregation
+
+- forEach, map, filter, reduce over pool data
+- some / every checks
+- find / findIndex lookups
+- Chaining iteration with queries
+- Statistics and custom aggregation
+
+[View Example](/examples/iteration)
 
 ### Game Service
 

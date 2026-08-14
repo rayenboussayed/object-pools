@@ -6,7 +6,7 @@ Event system for reacting to pool changes.
 
 Registers an event handler.
 
-```typescript
+```text
 pool.on(event: string, handler: Function): void
 ```
 
@@ -40,7 +40,7 @@ pool.on('get', (entry: PoolEntry<Proxy>) => {
 
 Unregisters an event handler.
 
-```typescript
+```text
 pool.off(event: string, handler: Function): void
 ```
 
@@ -59,7 +59,7 @@ pool.off('add', handler);
 
 Wraps a method with custom behavior.
 
-```typescript
+```text
 pool.wrap<K extends keyof Pool<T>>(
   method: K,
   wrapper: (original: Function, ...args: any[]) => any

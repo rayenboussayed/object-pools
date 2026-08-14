@@ -4,12 +4,12 @@ Advanced example demonstrating proxy pool management.
 
 ## Source Code
 
-[View on GitHub](https://github.com/phederal/pools/blob/main/examples/proxy-pool.ts)
+[View on GitHub](https://github.com/rayenboussayed/object-pools/blob/main/examples/proxy-pool.ts)
 
 ## Running
 
 ```bash
-bun run examples/proxy-pool.ts
+npm run example:proxy-pool
 ```
 
 ## Features Demonstrated
@@ -22,4 +22,4 @@ bun run examples/proxy-pool.ts
 -   Weighted selectors
 -   Binder for resource allocation
 
-See the [source code](https://github.com/phederal/pools/blob/main/examples/proxy-pool.ts) for the complete implementation.
+See the [source code](https://github.com/rayenboussayed/object-pools/blob/main/examples/proxy-pool.ts) for the complete implementation.

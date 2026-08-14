@@ -1,7 +1,6 @@
-import { describe, test, expect, beforeEach } from 'bun:test';
-import { Pool } from '../src/Pool';
-import { Selectors } from '../src/Selectors';
-import type { PoolEntry } from '../src/types';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { Pool } from '../src/pool';
+import { Selectors } from '../src/selectors';
 
 interface TestData {
 	id: string;
@@ -26,30 +25,30 @@ describe('Query', () => {
 		test('where() should filter by predicate', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.category === 'A')
+				.where((entry) => entry.data.category === 'A')
 				.toArray();
 
-			expect(result.length).toBe(3);
+			expect(result).toHaveLength(3);
 			expect(result.every((r) => r.category === 'A')).toBe(true);
 		});
 
 		test('where() should chain multiple filters', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.category === 'A')
-				.where((e) => e.meta.active === true)
+				.where((entry) => entry.data.category === 'A')
+				.where((entry) => entry.meta.active === true)
 				.toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 		});
 
 		test('whereOr() should match any of the predicates', () => {
 			const result = pool
 				.query()
-				.whereOr([(e) => e.data.id === '1', (e) => e.data.id === '5'])
+				.whereOr([(entry) => entry.data.id === '1', (entry) => entry.data.id === '5'])
 				.toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 			expect(result.some((r) => r.id === '1')).toBe(true);
 			expect(result.some((r) => r.id === '5')).toBe(true);
 		});
@@ -57,11 +56,11 @@ describe('Query', () => {
 		test('whereOr() should work with where()', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.category === 'A')
-				.whereOr([(e) => e.data.value > 200, (e) => e.data.value < 120])
+				.where((entry) => entry.data.category === 'A')
+				.whereOr([(entry) => entry.data.value > 200, (entry) => entry.data.value < 120])
 				.toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 		});
 	});
 
@@ -110,19 +109,19 @@ describe('Query', () => {
 		test('limit() should limit results', () => {
 			const result = pool.query().limit(3).toArray();
 
-			expect(result.length).toBe(3);
+			expect(result).toHaveLength(3);
 		});
 
 		test('offset() should skip results', () => {
 			const result = pool.query().offset(2).toArray();
 
-			expect(result.length).toBe(3);
+			expect(result).toHaveLength(3);
 		});
 
 		test('offset() and limit() should work together', () => {
 			const result = pool.query().offset(1).limit(2).toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 			expect(result[0]?.id).toBe('2');
 			expect(result[1]?.id).toBe('3');
 		});
@@ -130,13 +129,13 @@ describe('Query', () => {
 		test('limit() more than available should return all', () => {
 			const result = pool.query().limit(100).toArray();
 
-			expect(result.length).toBe(5);
+			expect(result).toHaveLength(5);
 		});
 
 		test('offset() beyond available should return empty', () => {
 			const result = pool.query().offset(100).toArray();
 
-			expect(result.length).toBe(0);
+			expect(result).toHaveLength(0);
 		});
 	});
 
@@ -144,7 +143,7 @@ describe('Query', () => {
 		test('select() should return single entry', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.category === 'A')
+				.where((entry) => entry.data.category === 'A')
 				.select(Selectors.first);
 
 			expect(result).not.toBeNull();
@@ -154,7 +153,7 @@ describe('Query', () => {
 		test('select() should return null if no match', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.value > 1000)
+				.where((entry) => entry.data.value > 1000)
 				.select(Selectors.first);
 
 			expect(result).toBeNull();
@@ -175,7 +174,7 @@ describe('Query', () => {
 		test('toArray() should return array of data', () => {
 			const result = pool.query().toArray();
 
-			expect(result.length).toBe(5);
+			expect(result).toHaveLength(5);
 			expect(result[0]).toHaveProperty('id');
 			expect(result[0]).toHaveProperty('name');
 		});
@@ -183,7 +182,7 @@ describe('Query', () => {
 		test('toPool() should return new Pool', () => {
 			const filtered = pool
 				.query()
-				.where((e) => e.data.category === 'A')
+				.where((entry) => entry.data.category === 'A')
 				.toPool();
 
 			expect(filtered.size).toBe(3);
@@ -193,14 +192,14 @@ describe('Query', () => {
 		test('toPool() should preserve metadata', () => {
 			const filtered = pool
 				.query()
-				.where((e) => e.data.id === '1')
+				.where((entry) => entry.data.id === '1')
 				.toPool();
 
 			expect(filtered.allEntries[0]?.meta.priority).toBe(1);
 		});
 
 		test('count should return number of entries', () => {
-			const count = pool.query().where((e) => e.data.category === 'A').count;
+			const count = pool.query().where((entry) => entry.data.category === 'A').count;
 
 			expect(count).toBe(3);
 		});
@@ -210,12 +209,12 @@ describe('Query', () => {
 		test('should combine filters, sorting, and pagination', () => {
 			const result = pool
 				.query()
-				.where((e) => e.meta.active === true)
+				.where((entry) => entry.meta.active === true)
 				.orderBy('value', 'desc')
 				.limit(2)
 				.toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 			expect(result[0]?.value).toBe(400);
 			expect(result[1]?.value).toBe(300);
 		});
@@ -223,38 +222,38 @@ describe('Query', () => {
 		test('should work with all features chained', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.value > 100)
-				.whereOr([(e) => e.data.category === 'A', (e) => e.meta.priority === 1])
+				.where((entry) => entry.data.value > 100)
+				.whereOr([(entry) => entry.data.category === 'A', (entry) => entry.meta.priority === 1])
 				.orderBy('value', 'asc')
 				.orderByMeta('priority', 'desc')
 				.offset(1)
 				.limit(2)
 				.toArray();
 
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 		});
 
 		test('should return empty array for impossible conditions', () => {
 			const result = pool
 				.query()
-				.where((e) => e.data.value > 1000)
-				.where((e) => e.data.value < 50)
+				.where((entry) => entry.data.value > 1000)
+				.where((entry) => entry.data.value < 50)
 				.toArray();
 
-			expect(result.length).toBe(0);
+			expect(result).toHaveLength(0);
 		});
 	});
 
 	describe('Events', () => {
 		test('beforeSelect event should fire', () => {
-			let fired = false;
+			let isFired = false;
 			pool.on('beforeSelect', () => {
-				fired = true;
+				isFired = true;
 			});
 
 			pool.query().select(Selectors.first);
 
-			expect(fired).toBe(true);
+			expect(isFired).toBe(true);
 		});
 
 		test('afterSelect event should fire with result', () => {
@@ -271,16 +270,16 @@ describe('Query', () => {
 		});
 
 		test('afterSelect should fire even if null', () => {
-			let fired = false;
+			let isFired = false;
 			pool.on('afterSelect', () => {
-				fired = true;
+				isFired = true;
 			});
 
 			pool.query()
-				.where((e) => e.data.value > 1000)
+				.where((entry) => entry.data.value > 1000)
 				.select(Selectors.first);
 
-			expect(fired).toBe(true);
+			expect(isFired).toBe(true);
 		});
 	});
 });

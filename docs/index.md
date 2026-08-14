@@ -22,11 +22,11 @@
 ## Quick Start
 
 ```bash
-bun install pools
+npm install pools
 ```
 
 ```typescript
-import { Pool, Selectors } from 'pools';
+import { Pool, Selectors } from 'object-pools';
 
 interface Proxy {
 	ip: string;
@@ -63,34 +63,36 @@ console.log(bestProxy); // { ip: '1.1.1.1', country: 'US', speed: 100 }
 
 ## Core Concepts
 
-### PoolEntry&lt;T&gt;
+### PoolEntry&lt;T, M&gt;
 
 Every item in a pool is wrapped in a `PoolEntry`:
 
 ```typescript
-type PoolEntry<T> = {
+type PoolEntry<T, M extends PoolMeta = PoolMeta> = {
 	data: T; // Your data
-	meta: Record<string, any>; // Metadata (usage stats, flags, etc.)
+	meta: M; // Metadata (usage stats, flags, etc.)
 };
 ```
 
-### Filter&lt;T&gt;
+### Filter&lt;T, M&gt;
 
 A function that decides whether to include an entry:
 
 ```typescript
-type Filter<T> = (entry: PoolEntry<T>) => boolean;
+type Filter<T, M extends PoolMeta = PoolMeta> = (entry: PoolEntry<T, M>) => boolean;
 
 // Example
-const usFilter = (e) => e.data.country === 'US';
+const isUSFilter = (entry) => entry.data.country === 'US';
 ```
 
-### Selector&lt;T&gt;
+### Selector&lt;T, M&gt;
 
 A function that picks one entry from filtered results:
 
 ```typescript
-type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
+type Selector<T, M extends PoolMeta = PoolMeta> = (
+	entries: PoolEntry<T, M>[],
+) => PoolEntry<T, M> | null;
 
 // Built-in selectors
 Selectors.first; // First entry
@@ -104,4 +106,4 @@ Selectors.weighted(fn); // Weighted random
 
 -   [API Reference](/api/) - Complete API documentation
 -   [Examples](/examples/) - Real-world usage examples
--   [GitHub](https://github.com/phederal/pools) - Source code
+-   [GitHub](https://github.com/rayenboussayed/object-pools) - Source code

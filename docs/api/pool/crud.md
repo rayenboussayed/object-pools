@@ -6,7 +6,7 @@ Methods for adding, updating, and removing entries from the pool.
 You can use destructuring for shorter syntax. Both ways are valid:
 ```typescript
 pool.remove(({ data }) => data.id === '123')  // With destructuring
-pool.remove(e => e.data.id === '123')         // Without destructuring
+pool.remove(entry => entry.data.id === '123')         // Without destructuring
 ```
 :::
 
@@ -14,8 +14,8 @@ pool.remove(e => e.data.id === '123')         // Without destructuring
 
 Adds an entry to the pool.
 
-```typescript
-pool.add(data: T, meta?: Record<string, any>): PoolEntry<T>
+```text
+pool.add(data: T, meta?: M): PoolEntry<T, M>
 ```
 
 **Parameters:**
@@ -34,8 +34,8 @@ pool.add({ id: '1', name: 'Alice' }, { active: true });
 
 Adds multiple entries at once. Fires a single `batchAdd` event instead of multiple `add` events.
 
-```typescript
-pool.addBatch(items: Array<{ data: T; meta?: Record<string, any> }>): PoolEntry<T>[]
+```text
+pool.addBatch(items: Array<{ data: T; meta?: M }>): PoolEntry<T, M>[]
 ```
 
 **Parameters:**
@@ -59,7 +59,7 @@ pool.addBatch([
 
 Removes entries matching a predicate.
 
-```typescript
+```text
 pool.remove(predicate: (data: T) => boolean): PoolEntry<T>[]
 ```
 
@@ -78,7 +78,7 @@ const removed = pool.remove(({ data }) => data.id === '123');
 
 Removes entries matching any of the predicates. Fires a single `batchRemove` event.
 
-```typescript
+```text
 pool.removeBatch(predicates: Array<(data: T) => boolean>): PoolEntry<T>[]
 ```
 

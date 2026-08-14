@@ -22,8 +22,16 @@
 ## Installation
 
 ```bash
-bun install
+npm install
 ```
+
+## Compatibility
+
+**Pools** targets **ECMAScript 2015 (ES6)** as its runtime floor — the library only relies on ES6 features (classes, iterators, `Symbol.iterator`, spread, etc.) and avoids later ECMAScript additions.
+
+This also matches the engine profile of Hermes (React Native's JavaScript engine), which — per [facebook/hermes `doc/Features.md`](https://github.com/facebook/hermes/blob/main/doc/Features.md) — "plans to target ECMAScript 2015 (ES6), with some carefully considered exceptions".
+
+The shipped `dist` build is real ES6 ESM (`.js` files with `import`/`export` statements), consumable by any ES6-compatible bundler or runtime.
 
 ## Quick Start
 
@@ -44,8 +52,8 @@ proxies.add({ ip: '1.1.1.1', country: 'US', speed: 100 }, { usedCount: 0, active
 // Query with filters and sorting
 const bestProxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
-	.where((e) => e.meta.active === true)
+	.where((entry) => entry.data.country === 'US')
+	.where((entry) => entry.meta.active === true)
 	.orderBy('speed', 'desc')
 	.select(Selectors.first);
 
@@ -80,7 +88,7 @@ A function that decides whether to include an entry:
 type Filter<T> = (entry: PoolEntry<T>) => boolean;
 
 // Example
-const usFilter = (e) => e.data.country === 'US';
+const isUSFilter = (entry) => entry.data.country === 'US';
 ```
 
 ### Selector<T>
@@ -118,7 +126,7 @@ poolOfPools.add(ukProxies);
 // Query pools from pool of pools
 const bestPool = poolOfPools
 	.query()
-	.where((e) => e.data.size > 10)
+	.where((entry) => entry.data.size > 10)
 	.select(Selectors.first);
 ```
 
@@ -148,11 +156,11 @@ pool.removeBatch([(data) => data.country === 'UK', (data) => data.speed < 100]);
 const proxy = pool.get('ip', '1.1.1.1');
 
 // Get by predicate
-const fastProxy = pool.get((e) => e.data.speed > 200);
+const fastProxy = pool.get((entry) => entry.data.speed > 200);
 
 // Check existence (like Map.has)
 const exists = pool.has('ip', '1.1.1.1');
-const hasFast = pool.has((e) => e.data.speed > 200);
+const hasFast = pool.has((entry) => entry.data.speed > 200);
 
 // Set (update or add)
 pool.set('ip', '1.1.1.1', { ip: '1.1.1.1', country: 'US', speed: 150 });
@@ -167,8 +175,8 @@ const deleted = pool.delete('ip', '1.1.1.1'); // returns boolean
 // Build queries with chaining
 const result = pool
 	.query()
-	.where((e) => e.data.country === 'US')
-	.where((e) => e.meta.active === true)
+	.where((entry) => entry.data.country === 'US')
+	.where((entry) => entry.meta.active === true)
 	.orderBy('speed', 'desc')
 	.orderByMeta('usedCount', 'asc')
 	.limit(10)
@@ -177,13 +185,13 @@ const result = pool
 // Select single entry
 const proxy = pool
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.select(Selectors.random);
 
 // Convert query to pool
 const usProxies = pool
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.toPool();
 ```
 
@@ -242,7 +250,7 @@ pool.deduplicate('ip');
 const backup = pool.clone();
 
 // Partition into two pools
-const [active, inactive] = pool.partition((e) => e.meta.active === true);
+const [active, inactive] = pool.partition((entry) => entry.meta.active === true);
 
 // Random sample
 const sample = pool.sample(10);
@@ -310,8 +318,8 @@ pool.wrap('add', async (original, data, meta) => {
 const query = pool.query();
 
 // Filtering
-query.where((e) => e.data.country === 'US');
-query.whereOr([(e) => e.data.provider === 'A', (e) => e.data.provider === 'B']);
+query.where((entry) => entry.data.country === 'US');
+query.whereOr([(entry) => entry.data.provider === 'A', (entry) => entry.data.provider === 'B']);
 
 // Sorting (chainable)
 query.orderBy('speed', 'desc');
@@ -337,8 +345,8 @@ const combo = new Binder()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
 	.bind('service', services)
-	.where('proxy', (e) => e.data.country === 'US')
-	.where('account', (e) => e.data.service === 'twitter')
+	.where('proxy', (entry) => entry.data.country === 'US')
+	.where('account', (entry) => entry.data.service === 'twitter')
 	.selectWith('proxy', Selectors.minBy('usedCount'))
 	.selectWith('account', Selectors.random)
 	.execute();
@@ -381,7 +389,7 @@ pool.query().select(Selectors.weighted((entry) => 1 / (entry.meta.usedCount + 1)
 See [examples/basic.ts](examples/basic.ts):
 
 ```bash
-bun run examples/basic.ts
+npm run example:basic
 ```
 
 ### Proxy Pool Management
@@ -389,7 +397,7 @@ bun run examples/basic.ts
 See [examples/proxy-pool.ts](examples/proxy-pool.ts):
 
 ```bash
-bun run examples/proxy-pool.ts
+npm run example:proxy-pool
 ```
 
 This example demonstrates:
@@ -407,7 +415,7 @@ This example demonstrates:
 See [examples/map-like.ts](examples/map-like.ts):
 
 ```bash
-bun run examples/map-like.ts
+npm run example:map-like
 ```
 
 This example demonstrates:
@@ -423,7 +431,7 @@ This example demonstrates:
 See [examples/game-service.ts](examples/game-service.ts):
 
 ```bash
-bun run examples/game-service.ts
+npm run example:game-service
 ```
 
 Comprehensive example demonstrating ALL library features:
@@ -451,8 +459,8 @@ proxies.on('get', (entry) => {
 // Get least-used US proxy
 const proxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
-	.where((e) => e.meta.active)
+	.where((entry) => entry.data.country === 'US')
+	.where((entry) => entry.meta.active)
 	.orderByMeta('usedCount', 'asc')
 	.select(Selectors.first);
 ```
@@ -464,7 +472,7 @@ const sessions = new Pool<Session>();
 
 // Auto-expire old sessions
 sessions.on('get', (entry) => {
-	if (Date.now() - entry.meta.lastUsed > 3600000) {
+	if (Date.now() - entry.meta.lastUsed > 3_600_000) {
 		entry.meta.expired = true;
 	}
 });
@@ -472,7 +480,7 @@ sessions.on('get', (entry) => {
 // Get valid session
 const session = sessions
 	.query()
-	.where((e) => !e.meta.expired)
+	.where((entry) => !entry.meta.expired)
 	.select(Selectors.random);
 ```
 
@@ -484,8 +492,8 @@ const resources = new Binder()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
 	.bind('service', services)
-	.where('proxy', (e) => e.meta.usedCount < 10)
-	.where('account', (e) => !e.meta.banned)
+	.where('proxy', (entry) => entry.meta.usedCount < 10)
+	.where('account', (entry) => !entry.meta.banned)
 	.selectWith('proxy', Selectors.minBy('usedCount'))
 	.selectWith('account', Selectors.random)
 	.execute();
@@ -530,10 +538,10 @@ Pools is designed for collections of hundreds to thousands of items. For very la
 pools/
 ├── src/
 │   ├── types.ts       # Core types
-│   ├── Pool.ts        # Main Pool class
-│   ├── Query.ts   # Query builder
-│   ├── Binder.ts  # Multi-pool binding
-│   ├── Selectors.ts   # Built-in selectors
+│   ├── pool.ts        # Main Pool class
+│   ├── query.ts       # Query builder
+│   ├── binder.ts      # Multi-pool binding
+│   ├── selectors.ts   # Built-in selectors
 │   └── index.ts       # Public API
 ├── examples/
 │   ├── basic.ts       # Basic usage

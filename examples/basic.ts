@@ -22,7 +22,7 @@ console.log(`Total proxies: ${proxies.size}`);
 // Query with filter
 const usProxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
+	.where((entry) => entry.data.country === 'US')
 	.select(Selectors.first);
 
 console.log('First US proxy:', usProxy);
@@ -35,8 +35,8 @@ console.log('Fastest proxy:', fastestProxy);
 // Query with multiple filters and sorting
 const bestUsProxy = proxies
 	.query()
-	.where((e) => e.data.country === 'US')
-	.where((e) => e.meta.usedCount < 5)
+	.where((entry) => entry.data.country === 'US')
+	.where((entry) => entry.meta.usedCount < 5)
 	.orderBy('speed', 'desc')
 	.select(Selectors.first);
 
@@ -65,11 +65,11 @@ const accounts = new Pool<Account>();
 accounts.add({ username: 'user1', service: 'twitter' });
 accounts.add({ username: 'user2', service: 'facebook' });
 
-const combo = new Binder()
+const combo = new Binder<{ proxy: Proxy; account: Account }>()
 	.bind('proxy', proxies)
 	.bind('account', accounts)
-	.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-	.where('account', (e: PoolEntry<Account>) => e.data.service === 'twitter')
+	.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+	.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'twitter')
 	.selectWith('proxy', Selectors.minBy('usedCount'))
 	.selectWith('account', Selectors.first)
 	.execute();
@@ -80,10 +80,10 @@ console.log('Combo result:', combo);
 console.log('\n=== GroupBy Example ===\n');
 
 const byCountry = proxies.groupBy('country');
-console.log(`Countries: ${Array.from(byCountry.keys())}`);
-byCountry.forEach((pool, country) => {
+console.log(`Countries: ${[...byCountry.keys()]}`);
+for (const [country, pool] of byCountry) {
 	console.log(`${country}: ${pool.size} proxies`);
-});
+}
 
 // Merge example
 console.log('\n=== Merge Example ===\n');
@@ -143,8 +143,8 @@ if (biggestPool) {
 // Find pools in Europe with more than 1 proxy
 const europePool = poolOfPools
 	.query()
-	.where((e) => e.meta.region === 'Europe')
-	.where((e) => e.data.size > 1)
+	.where((entry) => entry.meta.region === 'Europe')
+	.where((entry) => entry.data.size > 1)
 	.select(Selectors.first);
 
 if (europePool) {

@@ -6,7 +6,7 @@ Methods that make Pool behave like a Map for easy get/set/has/delete operations.
 
 Gets an entry by field value or predicate.
 
-```typescript
+```text
 pool.get(key: keyof T, value: any): T | null
 pool.get(predicate: (entry: PoolEntry<T>) => boolean): T | null
 ```
@@ -31,7 +31,7 @@ const admin = pool.get(({ data }) => data.role === 'admin');
 
 Checks if an entry exists.
 
-```typescript
+```text
 pool.has(key: keyof T, value: any): boolean
 pool.has(predicate: (entry: PoolEntry<T>) => boolean): boolean
 ```
@@ -59,8 +59,8 @@ if (pool.has(({ data }) => data.age > 18)) {
 
 Sets (updates or adds) an entry in the pool.
 
-```typescript
-pool.set(key: keyof T, value: any, data: T, meta?: Record<string, any>): PoolEntry<T>
+```text
+pool.set(key: keyof T, value: any, data: T, meta?: M): PoolEntry<T, M>
 ```
 
 **Parameters:**
@@ -81,7 +81,7 @@ pool.set('id', 'user123', { id: 'user123', name: 'Alice' });
 
 Deletes an entry from the pool.
 
-```typescript
+```text
 pool.delete(key: keyof T, value: any): boolean
 ```
 

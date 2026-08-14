@@ -6,7 +6,7 @@ Create queries for filtering, sorting, and selecting entries.
 
 Creates a query builder for filtering and selecting entries.
 
-```typescript
+```text
 pool.query(): Query<T>
 ```
 

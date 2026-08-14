@@ -3,7 +3,7 @@
 ## Using Bun
 
 ```bash
-bun add pools
+npm install pools
 ```
 
 ## Using npm
@@ -43,10 +43,10 @@ Ensure you have TypeScript configured with strict mode:
 
 ```typescript
 // Import main classes
-import { Pool, Binder, Selectors } from 'pools';
+import { Pool, Binder, Selectors } from 'object-pools';
 
 // Import types
-import type { PoolEntry, Filter, Selector } from 'pools';
+import type { PoolEntry, Filter, Selector } from 'object-pools';
 ```
 
 ## Requirements

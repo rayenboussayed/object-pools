@@ -12,17 +12,22 @@ Complete API documentation for the Pools library.
 ## Types
 
 ```typescript
+// Metadata attached to entries (extendable, index signature)
+type PoolMeta = Record<string, any>;
+
 // Entry wrapper
-type PoolEntry<T> = {
+type PoolEntry<T, M extends PoolMeta = PoolMeta> = {
 	data: T;
-	meta: Record<string, any>;
+	meta: M;
 };
 
 // Filter function
-type Filter<T> = (entry: PoolEntry<T>) => boolean;
+type Filter<T, M extends PoolMeta = PoolMeta> = (entry: PoolEntry<T, M>) => boolean;
 
 // Selector function
-type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
+type Selector<T, M extends PoolMeta = PoolMeta> = (
+	entries: PoolEntry<T, M>[],
+) => PoolEntry<T, M> | null;
 ```
 
 ## Quick Navigation

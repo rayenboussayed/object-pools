@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'bun:test';
-import { Selectors } from '../src/Selectors';
+import { describe, test, expect } from 'vitest';
+import { Selectors } from '../src/selectors';
 import type { PoolEntry } from '../src/types';
 
 interface TestData {
@@ -10,15 +10,15 @@ interface TestData {
 
 describe('Selectors', () => {
 	const createEntries = (count: number): PoolEntry<TestData>[] => {
-		return Array.from({ length: count }, (_, i) => ({
+		return Array.from({ length: count }, (_, index) => ({
 			data: {
-				id: `test${i + 1}`,
-				value: (i + 1) * 100,
-				weight: i + 1,
+				id: `test${index + 1}`,
+				value: (index + 1) * 100,
+				weight: index + 1,
 			},
 			meta: {
-				usedCount: i,
-				priority: count - i,
+				usedCount: index,
+				priority: count - index,
 			},
 		}));
 	};
@@ -61,7 +61,7 @@ describe('Selectors', () => {
 			const result = Selectors.random(entries);
 
 			expect(result).not.toBeNull();
-			expect(entries.some((e) => e.data.id === result?.data.id)).toBe(true);
+			expect(entries.some((entry) => entry.data.id === result?.data.id)).toBe(true);
 		});
 
 		test('should return null for empty array', () => {
@@ -82,7 +82,7 @@ describe('Selectors', () => {
 			const counts = new Map<string, number>();
 
 			// Run many times to check distribution
-			for (let i = 0; i < 300; i++) {
+			for (let index = 0; index < 300; index++) {
 				const result = Selectors.random(entries);
 				if (result) {
 					const count = counts.get(result.data.id) ?? 0;
@@ -139,22 +139,56 @@ describe('Selectors', () => {
 			// Should pick entry with data.value = 100, not meta.value = 50
 			expect(result?.data.id).toBe('a');
 		});
+
+		test('should skip entries with NaN field values', () => {
+			const entries: PoolEntry<TestData>[] = [
+				{ data: { id: 'a', value: 200, weight: 1 }, meta: {} },
+				{ data: { id: 'b', value: NaN, weight: 1 }, meta: {} },
+				{ data: { id: 'c', value: 100, weight: 1 }, meta: {} },
+			];
+
+			const result = Selectors.minBy<TestData>('value')(entries);
+
+			expect(result?.data.id).toBe('c');
+		});
+
+		test('should not let a NaN entry win even when it comes first', () => {
+			const entries: PoolEntry<TestData>[] = [
+				{ data: { id: 'first', value: NaN, weight: 1 }, meta: {} },
+				{ data: { id: 'second', value: 50, weight: 1 }, meta: {} },
+			];
+
+			const result = Selectors.minBy<TestData>('value')(entries);
+
+			expect(result?.data.id).toBe('second');
+		});
+
+		test('should fall back to the first entry when all values are NaN', () => {
+			const entries: PoolEntry<TestData>[] = [
+				{ data: { id: 'a', value: NaN, weight: 1 }, meta: {} },
+				{ data: { id: 'b', value: NaN, weight: 1 }, meta: {} },
+			];
+
+			const result = Selectors.minBy<TestData>('value')(entries);
+
+			expect(result?.data.id).toBe('a');
+		});
 	});
 
 	describe('weighted', () => {
 		test('should return weighted random entry', () => {
 			const entries = createEntries(3);
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
 
-			const result = Selectors.weighted(weightFn)(entries);
+			const result = Selectors.weighted(weightFunction)(entries);
 
 			expect(result).not.toBeNull();
-			expect(entries.some((e) => e.data.id === result?.data.id)).toBe(true);
+			expect(entries.some((entry) => entry.data.id === result?.data.id)).toBe(true);
 		});
 
 		test('should return null for empty array', () => {
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
-			const result = Selectors.weighted(weightFn)([]);
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
+			const result = Selectors.weighted(weightFunction)([]);
 
 			expect(result).toBeNull();
 		});
@@ -165,12 +199,12 @@ describe('Selectors', () => {
 				{ data: { id: 'high', value: 200, weight: 99 }, meta: {} },
 			];
 
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
 			const counts = new Map<string, number>();
 
 			// Run many times
-			for (let i = 0; i < 1000; i++) {
-				const result = Selectors.weighted(weightFn)(entries);
+			for (let index = 0; index < 1000; index++) {
+				const result = Selectors.weighted(weightFunction)(entries);
 				if (result) {
 					const count = counts.get(result.data.id) ?? 0;
 					counts.set(result.data.id, count + 1);
@@ -190,8 +224,8 @@ describe('Selectors', () => {
 				{ data: { id: 'nonzero', value: 200, weight: 10 }, meta: {} },
 			];
 
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
-			const result = Selectors.weighted(weightFn)(entries);
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
+			const result = Selectors.weighted(weightFunction)(entries);
 
 			// Should only select the non-zero weight entry
 			expect(result?.data.id).toBe('nonzero');
@@ -203,12 +237,12 @@ describe('Selectors', () => {
 				{ data: { id: 'b', value: 200, weight: 0 }, meta: {} },
 			];
 
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
-			const result = Selectors.weighted(weightFn)(entries);
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
+			const result = Selectors.weighted(weightFunction)(entries);
 
 			// Should fall back to random selection, not null
 			expect(result).not.toBeNull();
-			expect(['a', 'b'].includes(result!.data.id)).toBe(true);
+			expect(['a', 'b']).toContain(result!.data.id);
 		});
 
 		test('should handle negative weights in weighted selection', () => {
@@ -217,13 +251,13 @@ describe('Selectors', () => {
 				{ data: { id: 'positive', value: 200, weight: 10 }, meta: {} },
 			];
 
-			const weightFn = (e: PoolEntry<TestData>) => e.data.weight;
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.data.weight;
 
 			// Negative weights are allowed and work in the algorithm
-			const result = Selectors.weighted(weightFn)(entries);
+			const result = Selectors.weighted(weightFunction)(entries);
 
 			expect(result).not.toBeNull();
-			expect(['negative', 'positive'].includes(result!.data.id)).toBe(true);
+			expect(['negative', 'positive']).toContain(result!.data.id);
 		});
 
 		test('should work with meta-based weights', () => {
@@ -232,12 +266,12 @@ describe('Selectors', () => {
 				{ data: { id: 'b', value: 200, weight: 1 }, meta: { score: 8 } },
 			];
 
-			const weightFn = (e: PoolEntry<TestData>) => e.meta.score as number;
+			const weightFunction = (entry: PoolEntry<TestData>) => entry.meta.score as number;
 			const counts = new Map<string, number>();
 
 			// Run many times
-			for (let i = 0; i < 1000; i++) {
-				const result = Selectors.weighted(weightFn)(entries);
+			for (let index = 0; index < 1000; index++) {
+				const result = Selectors.weighted(weightFunction)(entries);
 				if (result) {
 					const count = counts.get(result.data.id) ?? 0;
 					counts.set(result.data.id, count + 1);

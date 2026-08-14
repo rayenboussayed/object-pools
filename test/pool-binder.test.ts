@@ -1,7 +1,7 @@
-import { describe, test, expect, beforeEach } from 'bun:test';
-import { Pool } from '../src/Pool';
-import { Binder } from '../src/Binder';
-import { Selectors } from '../src/Selectors';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { Pool } from '../src/pool';
+import { Binder } from '../src/binder';
+import { Selectors } from '../src/selectors';
 import type { PoolEntry } from '../src/types';
 
 interface Proxy {
@@ -44,7 +44,7 @@ describe('Binder', () => {
 
 	describe('Binding Pools', () => {
 		test('bind() should add pool to binder', () => {
-			const binder = new Binder().bind('proxy', proxies);
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>().bind('proxy', proxies);
 
 			const result = binder.execute();
 
@@ -53,7 +53,7 @@ describe('Binder', () => {
 		});
 
 		test('bind() should chain multiple pools', () => {
-			const binder = new Binder().bind('proxy', proxies).bind('account', accounts).bind('server', servers);
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>().bind('proxy', proxies).bind('account', accounts).bind('server', servers);
 
 			const result = binder.execute();
 
@@ -64,7 +64,7 @@ describe('Binder', () => {
 		});
 
 		test('execute() should return null if no pools bound', () => {
-			const binder = new Binder();
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>();
 
 			const result = binder.execute();
 
@@ -75,9 +75,9 @@ describe('Binder', () => {
 
 	describe('Filtering', () => {
 		test('where() should filter pool entries', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US');
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US');
 
 			const result = binder.execute();
 
@@ -85,24 +85,24 @@ describe('Binder', () => {
 		});
 
 		test('where() should chain multiple filters', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-				.where('proxy', (e: PoolEntry<Proxy>) => e.meta.usedCount < 5);
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.meta.usedCount < 5);
 
 			const result = binder.execute();
 
 			expect(result?.proxy.country).toBe('US');
 			// Result only contains data, not meta
-			expect(['1.1.1.1', '3.3.3.3'].includes(result?.proxy.ip)).toBe(true);
+			expect(['1.1.1.1', '3.3.3.3']).toContain(result?.proxy.ip ?? '');
 		});
 
 		test('where() should work on multiple pools', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-				.where('account', (e: PoolEntry<Account>) => e.data.service === 'twitter');
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+				.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'twitter');
 
 			const result = binder.execute();
 
@@ -111,9 +111,9 @@ describe('Binder', () => {
 		});
 
 		test('execute() should return null if any pool has no matches', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'FR');
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'FR');
 
 			const result = binder.execute();
 
@@ -123,9 +123,9 @@ describe('Binder', () => {
 
 	describe('Selection', () => {
 		test('selectWith() should use custom selector', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
 				.selectWith('proxy', Selectors.minBy('usedCount'));
 
 			const result = binder.execute();
@@ -135,11 +135,11 @@ describe('Binder', () => {
 		});
 
 		test('selectWith() should work on multiple pools', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-				.where('account', (e: PoolEntry<Account>) => e.data.service === 'twitter')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+				.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'twitter')
 				.selectWith('proxy', Selectors.minBy('usedCount'))
 				.selectWith('account', Selectors.first);
 
@@ -149,25 +149,25 @@ describe('Binder', () => {
 			expect(result?.account.username).toBe('user1');
 		});
 
-		test('should use random selector by default', () => {
-			const binder = new Binder().bind('proxy', proxies);
+		test('should use first selector by default', () => {
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>().bind('proxy', proxies);
 
 			const result = binder.execute();
 
 			expect(result?.proxy).toBeDefined();
-			expect(['1.1.1.1', '2.2.2.2', '3.3.3.3'].includes(result!.proxy.ip)).toBe(true);
+			expect(['1.1.1.1', '2.2.2.2', '3.3.3.3']).toContain(result!.proxy.ip);
 		});
 	});
 
 	describe('Complex Scenarios', () => {
 		test('should bind three pools with filters and selectors', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts)
 				.bind('server', servers)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-				.where('account', (e: PoolEntry<Account>) => e.data.service === 'twitter')
-				.where('server', (e: PoolEntry<Server>) => e.data.region === 'US')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+				.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'twitter')
+				.where('server', (entry: PoolEntry<Server>) => entry.data.region === 'US')
 				.selectWith('proxy', Selectors.minBy('usedCount'))
 				.selectWith('account', Selectors.random)
 				.selectWith('server', Selectors.first);
@@ -183,7 +183,7 @@ describe('Binder', () => {
 
 		test('should handle empty pools gracefully', () => {
 			const emptyPool = new Pool<Proxy>();
-			const binder = new Binder().bind('proxy', emptyPool);
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>().bind('proxy', emptyPool);
 
 			const result = binder.execute();
 
@@ -191,11 +191,11 @@ describe('Binder', () => {
 		});
 
 		test('should return null when filter makes pool empty', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
-				.where('account', (e: PoolEntry<Account>) => e.data.service === 'instagram');
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
+				.where('account', (entry: PoolEntry<Account>) => entry.data.service === 'instagram');
 
 			const result = binder.execute();
 
@@ -203,9 +203,9 @@ describe('Binder', () => {
 		});
 
 		test('should work with only one pool', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.speed > 100)
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.speed > 100)
 				.selectWith('proxy', Selectors.first);
 
 			const result = binder.execute();
@@ -217,9 +217,9 @@ describe('Binder', () => {
 
 	describe('Result Structure', () => {
 		test('should return data objects not entries', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.ip === '1.1.1.1')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.ip === '1.1.1.1')
 				.selectWith('proxy', Selectors.first);
 
 			const result = binder.execute();
@@ -231,10 +231,10 @@ describe('Binder', () => {
 		});
 
 		test('should return data for all bound pools', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account; server: Server }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.ip === '1.1.1.1')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.ip === '1.1.1.1')
 				.selectWith('proxy', Selectors.first)
 				.selectWith('account', Selectors.first);
 
@@ -247,31 +247,30 @@ describe('Binder', () => {
 
 	describe('Type Safety', () => {
 		test('should return correctly typed results', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy; account: Account }>()
 				.bind('proxy', proxies)
 				.bind('account', accounts);
 
 			const result = binder.execute();
 
-			if (result) {
-				// TypeScript should recognize these properties
-				expect(typeof result.proxy.ip).toBe('string');
-				expect(typeof result.proxy.country).toBe('string');
-				expect(typeof result.proxy.speed).toBe('number');
-				expect(typeof result.account.username).toBe('string');
-				expect(typeof result.account.service).toBe('string');
-			}
+			// TypeScript should recognize these properties
+			expect(result).not.toBeNull();
+			expect(typeof result?.proxy.ip).toBe('string');
+			expect(typeof result?.proxy.country).toBe('string');
+			expect(typeof result?.proxy.speed).toBe('number');
+			expect(typeof result?.account.username).toBe('string');
+			expect(typeof result?.account.service).toBe('string');
 		});
 	});
 
 	describe('Weighted Selection', () => {
 		test('should work with weighted selector', () => {
-			const binder = new Binder()
+			const binder = new Binder<{ proxy: Proxy }>()
 				.bind('proxy', proxies)
-				.where('proxy', (e: PoolEntry<Proxy>) => e.data.country === 'US')
+				.where('proxy', (entry: PoolEntry<Proxy>) => entry.data.country === 'US')
 				.selectWith(
 					'proxy',
-					Selectors.weighted((e: PoolEntry<Proxy>) => 1 / (e.meta.usedCount + 1))
+					Selectors.weighted((entry: PoolEntry<Proxy>) => 1 / (entry.meta.usedCount + 1))
 				);
 
 			const result = binder.execute();

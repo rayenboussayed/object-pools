@@ -4,12 +4,12 @@ Using Pool as a Map replacement with get/has/set/delete operations.
 
 ## Source Code
 
-[View on GitHub](https://github.com/phederal/pools/blob/main/examples/map-like.ts)
+[View on GitHub](https://github.com/rayenboussayed/object-pools/blob/main/examples/map-like.ts)
 
 ## Running
 
 ```bash
-bun run examples/map-like.ts
+npm run example:map-like
 ```
 
 ## Features Demonstrated
@@ -21,4 +21,4 @@ bun run examples/map-like.ts
 -   Config management
 -   Events with Map-like operations
 
-See the [source code](https://github.com/phederal/pools/blob/main/examples/map-like.ts) for the complete implementation.
+See the [source code](https://github.com/rayenboussayed/object-pools/blob/main/examples/map-like.ts) for the complete implementation.

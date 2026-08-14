@@ -4,12 +4,12 @@ Comprehensive example demonstrating ALL library features in a game service conte
 
 ## Source Code
 
-[View on GitHub](https://github.com/phederal/pools/blob/main/examples/game-service.ts)
+[View on GitHub](https://github.com/rayenboussayed/object-pools/blob/main/examples/game-service.ts)
 
 ## Running
 
 ```bash
-bun run examples/game-service.ts
+npm run example:game-service
 ```
 
 ## Features Demonstrated
@@ -24,4 +24,4 @@ bun run examples/game-service.ts
 
 This is the most comprehensive example showing how all library features work together in a realistic application.
 
-See the [source code](https://github.com/phederal/pools/blob/main/examples/game-service.ts) for the complete implementation.
+See the [source code](https://github.com/rayenboussayed/object-pools/blob/main/examples/game-service.ts) for the complete implementation.

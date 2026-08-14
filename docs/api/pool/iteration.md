@@ -6,7 +6,7 @@ Array-like iteration methods (forEach, map, filter, reduce, etc.).
 
 Executes a function for each entry in the pool.
 
-```typescript
+```text
 pool.forEach(fn: (entry: PoolEntry<T>, index: number) => void): void
 ```
 
@@ -15,16 +15,16 @@ pool.forEach(fn: (entry: PoolEntry<T>, index: number) => void): void
 
 **Example:**
 ```typescript
-pool.forEach((entry, index) => {
+for (const [index, entry] of pool.allEntries.entries()) {
   console.log(`${index}: ${entry.data.name}`);
-});
+}
 ```
 
 ## map()
 
 Maps each entry to a new value.
 
-```typescript
+```text
 pool.map<U>(fn: (entry: PoolEntry<T>, index: number) => U): U[]
 ```
 
@@ -43,7 +43,7 @@ const ips = proxyPool.map(({ data }) => data.ip);
 
 Filters entries and returns matching entries (not data).
 
-```typescript
+```text
 pool.filter(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T>[]
 ```
 
@@ -61,7 +61,7 @@ const active = pool.filter(({ meta }) => meta.active === true);
 
 Reduces the pool to a single value.
 
-```typescript
+```text
 pool.reduce<U>(
   fn: (accumulator: U, entry: PoolEntry<T>, index: number) => U,
   initialValue: U
@@ -85,7 +85,7 @@ const avgAge = totalAge / pool.size;
 
 Checks if any entry matches the predicate.
 
-```typescript
+```text
 pool.some(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 ```
 
@@ -103,7 +103,7 @@ const hasAdult = pool.some(({ data }) => data.age >= 18);
 
 Checks if all entries match the predicate.
 
-```typescript
+```text
 pool.every(fn: (entry: PoolEntry<T>, index: number) => boolean): boolean
 ```
 
@@ -121,7 +121,7 @@ const allActive = pool.every(({ meta }) => meta.active === true);
 
 Finds the first entry matching the predicate.
 
-```typescript
+```text
 pool.find(fn: (entry: PoolEntry<T>, index: number) => boolean): PoolEntry<T> | undefined
 ```
 
@@ -139,7 +139,7 @@ const admin = pool.find(({ data }) => data.role === 'admin');
 
 Finds the index of the first entry matching the predicate.
 
-```typescript
+```text
 pool.findIndex(fn: (entry: PoolEntry<T>, index: number) => boolean): number
 ```
 

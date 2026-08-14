@@ -6,7 +6,7 @@ Methods for combining multiple pools together.
 
 Merges one or more pools or queries into this pool.
 
-```typescript
+```text
 pool.merge(...sources: (Pool<T> | Query<T> | Array<Pool<T> | Query<T>>)[]): this
 ```
 
@@ -36,7 +36,7 @@ pool.merge(pool1, [pool2, pool3]);
 
 Merges pools ensuring uniqueness by a field or function.
 
-```typescript
+```text
 pool.mergeUnique(
   uniqueBy: keyof T | ((item: T) => any),
   ...sources: (Pool<T> | Query<T> | Array<Pool<T> | Query<T>>)[]
@@ -65,7 +65,7 @@ pool.mergeUnique('id', [pool1, pool2]);
 
 Union with another pool (no duplicates based on compareFn).
 
-```typescript
+```text
 pool.union(other: Pool<T>, compareFn?: (a: T, b: T) => boolean): this
 ```
 
@@ -87,7 +87,7 @@ pool.union(otherPool, (a, b) => a.id === b.id);
 
 Keep only entries that exist in both pools.
 
-```typescript
+```text
 pool.intersect(other: Pool<T>, compareFn?: (a: T, b: T) => boolean): this
 ```
 
@@ -110,7 +110,7 @@ premium.intersect(active, (a, b) => a.id === b.id);
 
 Remove entries that exist in another pool.
 
-```typescript
+```text
 pool.difference(other: Pool<T>, compareFn?: (a: T, b: T) => boolean): this
 ```
 
@@ -132,7 +132,7 @@ allUsers.difference(bannedUsers, (a, b) => a.id === b.id);
 
 Merges multiple pools into a new pool.
 
-```typescript
+```text
 Pool.merge<T>(...pools: Pool<T>[]): Pool<T>
 ```
 
@@ -140,7 +140,7 @@ Pool.merge<T>(...pools: Pool<T>[]): Pool<T>
 
 Merges multiple pools/queries with uniqueness constraint.
 
-```typescript
+```text
 Pool.mergeUnique<T>(
   sources: Array<Pool<T> | Query<T>>,
   uniqueBy: keyof T | ((item: T) => any)
@@ -151,7 +151,7 @@ Pool.mergeUnique<T>(
 
 Merges with custom duplicate resolution.
 
-```typescript
+```text
 Pool.mergeUniqueWith<T>(
   sources: Array<Pool<T> | Query<T>>,
   uniqueBy: keyof T | ((item: T) => any),

@@ -7,7 +7,7 @@ Built-in selection strategies for choosing entries from a pool.
 Selectors are functions that pick a single entry from an array of entries. They're used with `pool.query().select()`.
 
 ```typescript
-type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
+type Selector<T, M extends PoolMeta = PoolMeta> = (entries: PoolEntry<T, M>[]) => PoolEntry<T, M> | null;
 ```
 
 ## Built-in Selectors
@@ -16,8 +16,8 @@ type Selector<T> = (entries: PoolEntry<T>[]) => PoolEntry<T> | null;
 
 Selects the first entry.
 
-```typescript
-Selectors.first<T>(entries: PoolEntry<T>[]): PoolEntry<T> | null
+```text
+Selectors.first<T, M extends PoolMeta = PoolMeta>(entries: PoolEntry<T, M>[]): PoolEntry<T, M> | null
 ```
 
 **Example:**
@@ -30,8 +30,8 @@ const first = pool.query().select(Selectors.first);
 
 Selects the last entry.
 
-```typescript
-Selectors.last<T>(entries: PoolEntry<T>[]): PoolEntry<T> | null
+```text
+Selectors.last<T, M extends PoolMeta = PoolMeta>(entries: PoolEntry<T, M>[]): PoolEntry<T, M> | null
 ```
 
 **Example:**
@@ -44,8 +44,8 @@ const last = pool.query().select(Selectors.last);
 
 Selects a random entry.
 
-```typescript
-Selectors.random<T>(entries: PoolEntry<T>[]): PoolEntry<T> | null
+```text
+Selectors.random<T, M extends PoolMeta = PoolMeta>(entries: PoolEntry<T, M>[]): PoolEntry<T, M> | null
 ```
 
 **Example:**
@@ -58,8 +58,8 @@ const random = pool.query().select(Selectors.random);
 
 Creates a selector that picks the entry with the minimum value for a field.
 
-```typescript
-Selectors.minBy<T>(field: string): Selector<T>
+```text
+Selectors.minBy<T, M extends PoolMeta = PoolMeta>(field: string): Selector<T, M>
 ```
 
 Checks both `data` and `meta` for the field (prefers `data`).
@@ -78,8 +78,8 @@ const lowestPriority = pool.query().select(Selectors.minBy('priority'));
 
 Creates a weighted random selector.
 
-```typescript
-Selectors.weighted<T>(weightFn: (entry: PoolEntry<T>) => number): Selector<T>
+```text
+Selectors.weighted<T, M extends PoolMeta = PoolMeta>(weightFn: (entry: PoolEntry<T, M>) => number): Selector<T, M>
 ```
 
 Higher weight = higher probability of selection.
@@ -88,16 +88,16 @@ Higher weight = higher probability of selection.
 
 ```typescript
 // Prefer less-used entries
-const proxy = pool.query().select(Selectors.weighted((e) => 1 / (e.meta.usedCount + 1)));
+const proxy = pool.query().select(Selectors.weighted((entry) => 1 / (entry.meta.usedCount + 1)));
 
 // Prefer higher-speed entries
 const proxy = pool.query().select(Selectors.weighted(({ data }) => data.speed));
 
 // Custom weight function
 const proxy = pool.query().select(
-	Selectors.weighted((e) => {
-		const speed = e.data.speed;
-		const usage = e.meta.usedCount;
+	Selectors.weighted((entry) => {
+		const speed = entry.data.speed;
+		const usage = entry.meta.usedCount;
 		return speed / (usage + 1);
 	})
 );
@@ -112,15 +112,19 @@ If all weights are zero, falls back to random selection.
 You can create your own selectors:
 
 ```typescript
-import type { Selector, PoolEntry } from 'pools';
+import type { Selector, PoolEntry } from 'object-pools';
 
 // Select entry with longest name
 const longestName: Selector<User> = (entries) => {
 	if (entries.length === 0) return null;
 
-	return entries.reduce((longest, entry) => {
-		return entry.data.name.length > longest.data.name.length ? entry : longest;
-	});
+	let longest = entries[0]!;
+	for (const entry of entries) {
+		if (entry.data.name.length > longest.data.name.length) {
+			longest = entry;
+		}
+	}
+	return longest;
 };
 
 // Use it
@@ -132,7 +136,7 @@ const user = pool.query().select(longestName);
 Selectors work perfectly with the query API:
 
 ```typescript
-import { Selectors } from 'pools';
+import { Selectors } from 'object-pools';
 
 // Random US proxy
 const proxy = pool
@@ -152,8 +156,8 @@ const proxy = pool
 	.query()
 	.where(({ data }) => data.country === 'US')
 	.select(
-		Selectors.weighted((e) => {
-			return e.data.speed / (e.meta.usedCount + 1);
+		Selectors.weighted((entry) => {
+			return entry.data.speed / (entry.meta.usedCount + 1);
 		})
 	);
 ```

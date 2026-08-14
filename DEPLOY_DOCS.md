@@ -1,19 +1,19 @@
-# Развертывание документации на GitHub Pages
+# Deploying documentation to GitHub Pages
 
-## Автоматическая настройка
+## Automatic setup
 
-Документация автоматически собирается и публикуется при каждом пуше в `main` ветку.
+Documentation is automatically built and published on every push to the `main` branch.
 
-### Шаг 1: Включить GitHub Pages
+### Step 1: Enable GitHub Pages
 
-1. Зайди в Settings репозитория на GitHub
-2. В меню слева выбери **Pages**
-3. В разделе **Source** выбери:
+1. Go to repository Settings on GitHub
+2. Select **Pages** in the left menu
+3. In the **Source** section select:
    - Source: **GitHub Actions**
 
-Всё! Больше ничего настраивать не нужно.
+That's it! Nothing else needs to be configured.
 
-### Шаг 2: Запушить код
+### Step 2: Push the code
 
 ```bash
 git add .
@@ -21,117 +21,126 @@ git commit -m "Add documentation"
 git push
 ```
 
-GitHub Actions автоматически:
-1. Установит зависимости через Bun
-2. Соберёт документацию (`bun run docs:build`)
-3. Опубликует на GitHub Pages
+GitHub Actions automatically:
+1. Installs dependencies with npm
+2. Builds the documentation (`npm run docs:build`)
+3. Publishes to GitHub Pages
 
-Документация будет доступна по адресу:
+The documentation will be available at:
 ```
 https://yourusername.github.io/pools/
 ```
 
-## Локальная разработка
+## Local development
 
-### Запустить dev сервер
-
-```bash
-bun run docs:dev
-```
-
-Откроется на `http://localhost:5173`
-
-### Собрать документацию
+### Start the dev server
 
 ```bash
-bun run docs:build
+npm run docs:dev
 ```
 
-Результат будет в `docs/.vitepress/dist/`
+Opens at `http://localhost:5173`
 
-### Посмотреть production версию
+### Build the documentation
 
 ```bash
-bun run docs:preview
+npm run docs:build
 ```
 
-## Структура документации
+The result will be in `docs/.vitepress/dist/`
+
+### Preview the production version
+
+```bash
+npm run docs:preview
+```
+
+## Documentation structure
 
 ```
 docs/
 ├── .vitepress/
-│   └── config.ts          # Конфигурация VitePress
-├── index.md               # Главная страница
+│   └── config.ts          # VitePress configuration
+├── index.md               # Home page
 ├── guide/
-│   ├── installation.md    # Установка
-│   └── quick-start.md     # Быстрый старт
+│   ├── installation.md    # Installation
+│   └── quick-start.md     # Quick start
 ├── api/
-│   ├── index.md           # Обзор API
-│   ├── pool.md            # Pool API
-│   ├── pool-query.md      # PoolQuery API
-│   ├── pool-binder.md     # PoolBinder API
+│   ├── index.md           # API overview
+│   ├── pool.md            # Pool overview
+│   ├── pool/              # Pool API sections
+│   │   ├── crud.md        #   CRUD methods
+│   │   ├── events.md      #   Events
+│   │   ├── iteration.md   #   Iteration methods
+│   │   ├── map-like.md    #   Map-like usage
+│   │   ├── merge.md       #   Merging pools
+│   │   ├── properties.md  #   Properties
+│   │   ├── query.md       #   Pool.query()
+│   │   └── transform.md   #   Transform methods
+│   ├── query.md           # Query API
+│   ├── binder.md          # Binder API
 │   └── selectors.md       # Selectors API
 └── examples/
-    ├── index.md           # Обзор примеров
-    ├── basic.md           # Базовый пример
+    ├── index.md           # Examples overview
+    ├── basic.md           # Basic example
     ├── proxy-pool.md      # Proxy pool
     ├── map-like.md        # Map-like usage
     └── game-service.md    # Game service
 ```
 
-## Обновление документации
+## Updating the documentation
 
-1. Отредактируй нужные `.md` файлы в `docs/`
-2. Проверь локально: `bun run docs:dev`
-3. Закоммить и запушить
+1. Edit the desired `.md` files in `docs/`
+2. Check locally: `npm run docs:dev`
+3. Commit and push
 
-GitHub Actions автоматически обновит сайт.
+GitHub Actions will automatically update the site.
 
-## Что использовано
+## What is used
 
-- **VitePress** - современный генератор статических сайтов
-- **GitHub Pages** - бесплатный хостинг от GitHub
-- **GitHub Actions** - автоматическая сборка и деплой
+- **VitePress** - modern static site generator
+- **GitHub Pages** - free hosting from GitHub
+- **GitHub Actions** - automatic build and deploy
 
-## Настройка base URL
+## Setting the base URL
 
-В файле `docs/.vitepress/config.ts`:
+In the `docs/.vitepress/config.ts` file:
 
 ```typescript
 export default defineConfig({
-  base: '/pools/',  // Имя репозитория
+  base: '/pools/',  // Repository name
   // ...
 });
 ```
 
-Если у тебя кастомный домен, поменяй на `/`.
+If you have a custom domain, change it to `/`.
 
-## Кастомный домен (опционально)
+## Custom domain (optional)
 
-1. Создай файл `docs/public/CNAME` с доменом:
+1. Create a `docs/public/CNAME` file with the domain:
    ```
    docs.example.com
    ```
 
-2. Настрой DNS:
+2. Configure DNS:
    ```
    docs  CNAME  yourusername.github.io
    ```
 
-3. В GitHub Settings > Pages укажи свой домен
+3. In GitHub Settings > Pages specify your domain
 
 ## Troubleshooting
 
-### Ошибка 404 после публикации
+### 404 error after publication
 
-Проверь `base` в `config.ts` - должно совпадать с именем репозитория.
+Check `base` in `config.ts` - it should match the repository name.
 
-### Не обновляется сайт
+### The site is not updated
 
-1. Проверь GitHub Actions: вкладка **Actions** в репозитории
-2. Посмотри логи сборки
-3. Проверь что GitHub Pages включен
+1. Check GitHub Actions: the **Actions** tab in the repository
+2. Look at the build logs
+3. Check that GitHub Pages is enabled
 
-### Локально всё работает, на GitHub Pages - нет
+### Works locally, but not on GitHub Pages
 
-Проверь пути к ресурсам - они должны быть относительными или использовать `base`.
+Check resource paths - they should be relative or use `base`.

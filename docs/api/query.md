@@ -9,7 +9,7 @@ Create a query using `pool.query()`, then chain methods to build your query.
 ::: tip Destructuring Option
 You can use destructuring for shorter syntax. Both ways are valid:
 
-```typescript
+```text
 // With destructuring (shorter)
 .where(({ data, meta }) => data.country === 'US' && meta.active)
 
@@ -25,8 +25,8 @@ You can use destructuring for shorter syntax. Both ways are valid:
 
 Adds a filter to the query.
 
-```typescript
-query.where(filter: Filter<T>): Query<T>
+```text
+query.where(filter: Filter<T, M>): Query<T, M>
 ```
 
 **Example:**
@@ -44,8 +44,8 @@ const result = pool
 
 Adds an OR filter (matches any of the predicates).
 
-```typescript
-query.whereOr(filters: Filter<T>[]): Query<T>
+```text
+query.whereOr(filters: Filter<T, M>[]): Query<T, M>
 ```
 
 **Example:**
@@ -63,9 +63,9 @@ const result = pool
 
 Sorts by a field or custom comparator.
 
-```typescript
+```text
 query.orderBy(field: keyof T, order: 'asc' | 'desc'): Query<T>
-query.orderBy(compareFn: (a: PoolEntry<T>, b: PoolEntry<T>) => number): Query<T>
+query.orderBy(compareFn: (a: PoolEntry<T, M>, b: PoolEntry<T, M>) => number): Query<T, M>
 ```
 
 **Examples:**
@@ -82,7 +82,7 @@ pool.query().orderBy((a, b) => b.data.speed - a.data.speed);
 
 Sorts by a metadata field.
 
-```typescript
+```text
 query.orderByMeta(field: string, order: 'asc' | 'desc'): Query<T>
 ```
 
@@ -98,7 +98,7 @@ pool.query().orderByMeta('usedCount', 'asc');
 
 Limits the number of results.
 
-```typescript
+```text
 query.limit(count: number): Query<T>
 ```
 
@@ -112,7 +112,7 @@ pool.query().limit(10).toArray(); // Get first 10
 
 Skips a number of results.
 
-```typescript
+```text
 query.offset(count: number): Query<T>
 ```
 
@@ -128,14 +128,14 @@ pool.query().offset(20).limit(10).toArray(); // Get 10 items starting from 20
 
 Selects a single entry using a selector.
 
-```typescript
-query.select(selector: Selector<T>): T | null
+```text
+query.select(selector: Selector<T, M>): T | null
 ```
 
 **Example:**
 
 ```typescript
-import { Selectors } from 'pools';
+import { Selectors } from 'object-pools';
 
 const proxy = pool
 	.query()
@@ -147,7 +147,7 @@ const proxy = pool
 
 Returns all filtered and sorted entries as an array.
 
-```typescript
+```text
 query.toArray(): T[]
 ```
 
@@ -165,8 +165,8 @@ const users = pool
 
 Converts the query to a new Pool.
 
-```typescript
-query.toPool(): Pool<T>
+```text
+query.toPool(): Pool<T, M>
 ```
 
 **Example:**
@@ -182,7 +182,7 @@ const activeUsers = pool
 
 Gets the count of filtered entries.
 
-```typescript
+```text
 query.count: number
 ```
 
